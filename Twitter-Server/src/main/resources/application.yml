@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+  main:
+    allow-circular-references: true
+  datasource:
+    druid:
+      driver-class-name: ${twitter.datasource.driver-class-name}
+      url: jdbc:mysql://${twitter.datasource.host}:${twitter.datasource.port}/${twitter.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+      username: ${twitter.datasource.username}
+      password: ${twitter.datasource.password}
+  data:
+    redis:
+      host: ${twitter.redis.host}
+      password: ${twitter.redis.password}
+      port: ${twitter.redis.port}
+      database: ${twitter.redis.database}

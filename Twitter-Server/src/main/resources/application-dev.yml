@@ -1,0 +1,19 @@
+twitter:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    host: localhost
+    port: 3306
+    database: twitter-app
+    username: root
+    password: 1234
+  alioss:
+      endpoint: oss-cn-shenzhen.aliyuncs.com
+      accessKeyId: LTAI5tNuYrWMjJWzTiq5V7zL
+      accessKeySecret: Rttw8dRybd0darpeXf1pMImxCtdNNG
+      bucket-name: web-yeshou
+
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 10
