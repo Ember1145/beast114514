@@ -8,6 +8,10 @@
         <version>3.2.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
+    <modules>
+        <module>Twitter-Server</module>
+        <module>Twitter-Common</module>
+    </modules>
     <groupId>com.lts</groupId>
     <artifactId>Twitter-demo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
@@ -27,10 +31,6 @@
         <jjwt>0.9.1</jjwt>
         <jaxb-api>2.3.1</jaxb-api>
     </properties>
-<modules>
-
-    <module>Twitter-Common</module>
-</modules>
 
 <dependencyManagement>
     <dependencies>
