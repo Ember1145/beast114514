@@ -18,3 +18,21 @@ spring:
       password: ${twitter.redis.password}
       port: ${twitter.redis.port}
       database: ${twitter.redis.database}
+
+mybatis-plus:
+  type-aliases-package: com.lts.domain.po
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+  global-config:
+    db-config:
+      id-type: auto
+      update-strategy: not_null
+  mapper-locations: "classpath*:/mapper/**/*.xml"
+logging:
+  level:
+    com:
+      sky:
+        mapper: debug
+        service: info
+        controller: info

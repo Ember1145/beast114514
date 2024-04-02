@@ -3,7 +3,7 @@ twitter:
     driver-class-name: com.mysql.cj.jdbc.Driver
     host: localhost
     port: 3306
-    database: twitter-app
+    database: twitter_app
     username: root
     password: 1234
   alioss:

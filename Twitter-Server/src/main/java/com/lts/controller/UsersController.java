@@ -6,7 +6,8 @@ import com.lts.domain.dto.userDTO;
 import com.lts.domain.po.Users;
 import com.lts.service.IUsersService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,14 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
+@MapperScan("com.lts.mapper")
 public class UsersController {
     private final IUsersService usersService;
-
-
+@PostMapping("/register")
     public void saveOrUpdate(@RequestBody userDTO userDTO) {
-
-        Users users = BeanUtil.copyProperties(userDTO, Users.class);
-        usersService.save(users);
+        usersService.userRegister(userDTO);
     }
 
 }
