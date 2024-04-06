@@ -28,7 +28,6 @@
         <aliyun.sdk.oss>3.10.2</aliyun.sdk.oss>
         <knife4j>3.0.2</knife4j>
         <aspectj>1.9.4</aspectj>
-        <jjwt>0.9.1</jjwt>
         <jaxb-api>2.3.1</jaxb-api>
         <hutool>5.7.6</hutool>
     </properties>
@@ -69,11 +68,6 @@
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-spring-boot-starter</artifactId>
             <version>${knife4j}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt</artifactId>
-            <version>${jjwt}</version>
         </dependency>
         <dependency>
             <groupId>com.alibaba</groupId>
