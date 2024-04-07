@@ -80,10 +80,10 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             Map<String, Object> claims = new HashMap<>();
             claims.put(JwtClaimsConstant.EMAIL, users.getUserId());
 
-            SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+//            SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
             String token = JwtUtil.createJWT(
-                    secretKey,
+                   jwtProperties.getAdminSecretKey(),
                     jwtProperties.getAdminTtl(),
                     claims);
 
