@@ -15,7 +15,7 @@
         :style="{
           color: commentHover ? 'blue' : 'initial'
         }"
-      > {{interactionStore.interactions[props.tweetId]?.commentCount }}
+      > {{interactionStore.interactions[props.tweet.tweetId]?.commentCount }}
       </div>
     </div>
 <el-dropdown trigger="click">
@@ -39,7 +39,7 @@
           color: shareActive ? 'green' : shareHover ? 'green' : 'initial'
         }"
       >
-      {{interactionStore.interactions[props.tweetId]?.shareCount }}
+      {{interactionStore.interactions[props.tweet.tweetId]?.shareCount }}
       </div>
     </div>
     <template #dropdown>
@@ -67,7 +67,7 @@
         :style="{
           color: likeActive ? 'red' : likeHover ? 'red' : 'initial'
         }">
-        {{interactionStore.interactions[props.tweetId]?.likeCount }}
+        {{interactionStore.interactions[props.tweet.tweetId]?.likeCount }}
       </div>
     </div>
     <div class="interaction">
@@ -83,19 +83,30 @@
 <script setup lang="ts">
 import { useInteractionStore } from '@/stores/Interaction/InteractionStore';
 import { InteractionState } from '@/stores/Interaction/InteractionState';
-import { computed, onMounted, ref } from 'vue'
+import { PropType, computed, onMounted, ref } from 'vue'
 import { queryStatus } from '@/api/twi/twi';
+interface Tweet {
+      userId: string
+      username: string
+      emailCut: string
+      content: string
+      avatarUrl: string
+      tweetId: string
+      parentId: string
+      media: Array<any>
+      createdAt: string
+    }
 const props = defineProps({
-  tweetId: {
-    type: String,
-    required: true,
+  tweet: {
+    type: Object as PropType<Tweet>,
+    required: true
   }
 });
 const interactionStore = useInteractionStore();
 onMounted(async () => {
-  const response = await queryStatus(props.tweetId)
+  const response = await queryStatus(props.tweet.tweetId)
   interactionStore.initInteraction(
-      props.tweetId,
+      props.tweet.tweetId,
       response.data?.likeCount || 0,
       response.data?.commentCount || 0,
       response.data?.shareCount || 0,
@@ -104,16 +115,16 @@ onMounted(async () => {
     );
 })
 const likeActive = computed(() => {
-  return interactionStore.interactions[props.tweetId]?.likeState === InteractionState.Active;
+  return interactionStore.interactions[props.tweet.tweetId]?.likeState === InteractionState.Active;
 });
 const toggleLike = () => {
-  interactionStore.toggleLike(props.tweetId);
+  interactionStore.toggleLike(props.tweet);
 };
 const toggleShare=()=>{
-  interactionStore.toggleShare(props.tweetId);
+  interactionStore.toggleShare(props.tweet.tweetId);
 }
 const shareActive = computed(() => {
-  return interactionStore.interactions[props.tweetId]?.shareState === InteractionState.Active;
+  return interactionStore.interactions[props.tweet.tweetId]?.shareState === InteractionState.Active;
 });
 const commentHover = ref()
 const shareHover = ref()

@@ -41,13 +41,22 @@ export const useUserLikedStore = defineStore(
     const pushArray = (newArr: Tweet[], path) => {
       likeHistories.value[path].likedTweet.push(...newArr);  
     };
+    const pushItem = (item: Tweet, path) => {
+      likeHistories.value[path].likedTweet.unshift(item);  
+    };
+    // const delItem = (item: Tweet, path) => {
+    //   const index = likeHistories.value[path].likedTweet.findIndex((tweet: Tweet) => tweet.tweetId === item.tweetId);
+    //   if (index !== -1) {
+    //     likeHistories.value[path].likedTweet.splice(index, 1);
+    //   }
+    // };
     const getPageState = (routePath) => {
       return likeHistories.value[routePath]
     }
     const clearHistory = () => {
       likeHistories.value = {}
     }
-    return { savePageState, getPageState, likeHistories, clearHistory, loadData,pushArray }
+    return { savePageState, getPageState, likeHistories, clearHistory, loadData,pushArray,pushItem}
   },
   {
     persist: {

@@ -3,7 +3,7 @@
     <TweetMain :key="tweet.tweetId" :tweet="tweet" @click="getIn(tweet)">
       <template #foot>
         <TweetIcon
-          :tweetId="tweet.tweetId"
+          :tweet="tweet"
           :key="'tweet-icon-' + tweet.tweetId"
         ></TweetIcon>
       </template>

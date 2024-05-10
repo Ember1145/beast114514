@@ -2,6 +2,10 @@ import { defineStore } from 'pinia'
 import { InteractionState } from './InteractionState'
 import { ref } from 'vue'
 import { handleLike, handleShare } from '@/api/twi/twi'
+import { useUserLikedStore } from '../UserPageDown/UserLikedStore'
+import { myStore } from '../myStore'
+const userLikedStore=useUserLikedStore()
+const my=myStore()
 interface InteractionStatus {
   tweetId: string
   likeState: InteractionState
@@ -14,6 +18,17 @@ interface InteractionStatus {
 export const useInteractionStore = defineStore(
   'interaction',
   () => {
+    interface Tweet {
+      userId: string
+      username: string
+      emailCut: string
+      content: string
+      avatarUrl: string
+      tweetId: string
+      parentId: string
+      media: Array<any>
+      createdAt: string
+    }
     const interactions = ref<Record<string, InteractionStatus>>({})
     const initInteraction = (
       tweetId: string,
@@ -33,8 +48,9 @@ export const useInteractionStore = defineStore(
       }
     }
 
-    const toggleLike = async (tweetId: string) => {
-      const interaction = interactions.value[tweetId]
+    const toggleLike = async (tweet: Tweet) => {
+      const path=`/${my.emailCut}/likes`
+      const interaction = interactions.value[tweet.tweetId]
       const liked =
         interaction.likeState === InteractionState.Active
           ? InteractionState.Inactive
@@ -44,6 +60,7 @@ export const useInteractionStore = defineStore(
       interaction.likeState = liked
       if (liked === InteractionState.Active) {
         interaction.likeCount++ 
+        userLikedStore.pushItem(tweet,path)
       } else {
         interaction.likeCount-- 
       }
@@ -51,7 +68,7 @@ export const useInteractionStore = defineStore(
         interaction.likeCount = 0
       }
       const data = {
-        tweetId: tweetId,
+        tweetId: tweet.tweetId,
         liked: liked
       }
       await handleLike(data)
