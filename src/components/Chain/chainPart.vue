@@ -1,5 +1,10 @@
 <template>
-  <el-container class="common">
+  <el-container
+    class="common"
+    @mouseenter="fatherColor = '#fdfafa'"
+    @mouseleave="fatherColor = 'white'"
+    :style="{ '--chain-display': hideLastChain ? 'none' : 'block' }"
+  >
     <el-aside width="64px">
       <el-avatar :size="46" :src="tweet?.avatarUrl" @click.stop="handlePage" />
     </el-aside>
@@ -34,15 +39,20 @@
           </template>
         </div>
       </el-main>
-      <slot name="foot"></slot>
+        <TweetIcon
+          :tweet="props.tweet"
+          :fatherColor="fatherColor"
+        ></TweetIcon>
     </el-container>
   </el-container>
 </template>
 <script setup lang="ts">
-import { PropType, defineProps } from 'vue'
+import { PropType, defineProps, ref } from 'vue'
 import { MoreFilled } from '@element-plus/icons-vue'
 import { getUserPage } from '@/api/user/user'
+import TweetIcon from '@/components/TweetIcon.vue'
 import router from '@/router'
+const fatherColor = ref()
 const handlePage = () => {
   getUserPage(props.tweet.emailCut)
   router.push(`/${props.tweet.emailCut}`)
@@ -109,7 +119,8 @@ const props = defineProps({
   tweet: {
     type: Object as PropType<Tweet>,
     required: true
-  }
+  },
+  hideLastChain:Boolean
 })
 </script>
 
@@ -121,21 +132,29 @@ const props = defineProps({
   border-top: none;
   min-height: 40px;
   position: relative;
- &:last-child::before {
-      display: none; /* 这会隐藏最后一条评论的链条 */
-    }
+  cursor: pointer;
+  &:hover {
+    background-color: #fdfafa;
+    cursor: pointer;
+  }
   &::before {
     content: '';
     position: absolute;
     left: 36px;
     top: 64px;
     height: 87%;
-    border-left: 3px solid #CfD9DE;
-    
+    border-left: 3px solid #cfd9de;
+    z-index: 100;
   }
+  &:last-child::before {
+    display:var(--chain-display, block); 
+  }
+
   .el-aside {
     width: 50px;
     .el-avatar {
+      position: relative;
+      z-index: 101;
       cursor: pointer;
       margin-right: 1px;
       &:hover {

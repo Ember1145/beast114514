@@ -2,6 +2,7 @@ import { reactive } from 'vue'
 import { defineStore } from 'pinia'
 import { followSev, getUserPage } from '@/api/user/user'
 import { myStore } from './myStore'
+
 export const userPageStore = defineStore(
   'userPageStore',
   () => {
@@ -27,6 +28,7 @@ export const userPageStore = defineStore(
       }
       const response = await getUserPage(emailCut)
       const profileData: UserProfile = response.data
+      
       profiles[emailCut] = reactive(profileData)
       return profiles[emailCut]
     }

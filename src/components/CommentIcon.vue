@@ -1,12 +1,49 @@
 <template>
   <div class="tweet-inter">
-    <div class="interaction">
-      <el-button circle text> <i class="fa-regular fa-comment"> </i></el-button
-      > {{interactionStore.interactions[tweetId].commentCount }}
+    <div class="interaction" @mouseenter="handleComment" @mouseleave="commentOut">
+      <RoundButton :buttonHover="commentHover">
+        <i
+          class="fa-regular fa-comment"
+          :style="{
+            color: commentHover ?  'rgb(75, 155, 216)' : 'initial'
+          }"
+        ></i
+      ></RoundButton>
+      <div
+        class="interaction-count"
+        :style="{
+          color: commentHover ? 'rgb(100, 170, 224)' : 'initial'
+        }"
+      >
+        {{ interactionStore.interactions[props.tweet?.tweetId]?.commentCount }}
+      </div>
     </div>
-    <div class="interaction">
-      <el-button class="fa-solid fa-repeat" circle text></el-button> {{interactionStore.interactions[tweetId].shareCount }}
-    </div>
+    <el-dropdown trigger="click">
+      <div class="interaction" @mouseenter="handleShare" @mouseleave="shareOut" @click.stop>
+        <RoundButton :buttonHover="shareHover">
+          <i
+            class="fa-solid fa-repeat"
+            :style="{
+              color: shareActive ? 'green' : shareHover ? 'green' : 'initial'
+            }"
+          ></i
+        ></RoundButton>
+        <div
+          class="share-count"
+          :style="{
+            color: shareActive ? 'green' : shareHover ? 'green' : 'initial'
+          }"
+        >
+          {{ interactionStore.interactions[props.tweet?.tweetId]?.shareCount }}
+        </div>
+      </div>
+      <template #dropdown>
+        <el-dropdown-menu>
+          <el-dropdown-item @click.stop="toggleShare">转贴</el-dropdown-item>
+          <el-dropdown-item>引用</el-dropdown-item>
+        </el-dropdown-menu>
+      </template>
+    </el-dropdown>
     <div
         class="interaction"
         @mouseenter="handleLike"
@@ -26,7 +63,7 @@
             color: likeActive ? 'red' : likeHover ? 'red' : 'initial'
           }"
         >
-        {{interactionStore.interactions[tweetId].likeCount }}
+        {{interactionStore.interactions[tweet.tweetId].likeCount }}
         </div>
       </div>
     <div class="interaction">
@@ -42,11 +79,7 @@
 
 import { InteractionState } from '@/stores/Interaction/InteractionState';
 import { useInteractionStore } from '@/stores/Interaction/InteractionStore';
-import { computed,  onMounted,  ref } from 'vue'
-onMounted(async()=>{
-
-
-})
+import { PropType, computed,   ref } from 'vue'
 const buttonHover=ref()
 const handleLike=()=>{
   likeHover.value = true
@@ -56,17 +89,52 @@ const likeOut=()=>{
   likeHover.value=false
   buttonHover.value='white'
 }
-const props=defineProps({
-  tweetId:String
+const commentHover = ref()
+const handleComment = () => {
+  commentHover.value = 'rgba(0,0,255,0.1)'
+}
+const commentOut = () => {
+  commentHover.value = ''
+}
+const shareHover = ref()
+const handleShare = () => {
+  shareHover.value = 'rgba(0,255,0,0.1)'
+}
+const shareOut = () => {
+  shareHover.value = ''
+}
+const shareActive = computed(() => {
+  return interactionStore.interactions[props.tweet?.tweetId]?.shareState === InteractionState.Active
 })
+const toggleShare = () => {
+  interactionStore.toggleShare(props.tweet.tweetId)
+}
+
+interface Tweet {
+      userId: string
+      username: string
+      emailCut: string
+      content: string
+      avatarUrl: string
+      tweetId: string
+      parentId: string
+      media: Array<any>
+      createdAt: string
+    }
+const props = defineProps({
+  tweet: {
+    type: Object as PropType<Tweet>,
+    required: true
+  }
+});
 const interactionStore = useInteractionStore();
 
 // 创建计算属性来确定按钮样式
 const likeActive = computed(() => {
-  return interactionStore.interactions[props.tweetId]?.likeState === InteractionState.Active;
+  return interactionStore.interactions[props.tweet.tweetId]?.likeState === InteractionState.Active;
 });
 const toggleLike = () => {
-  interactionStore.toggleLike(props.tweetId);
+  interactionStore.toggleLike(props.tweet);
 };
 const likeHover = ref(false)
 </script>

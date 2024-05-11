@@ -35,7 +35,6 @@ instance.interceptors.response.use(
     }
   },
   (error) => {
-    // 判断响应状态码，如果为 401，则跳转到登录页面
     if (error.response && error.response.status === 401) {
       alert('请先登录')
       router.push('/login')
@@ -43,7 +42,6 @@ instance.interceptors.response.use(
       // 显示服务异常信息
       ElMessage.success('服务yic')
     }
-
     return Promise.reject(error) // 异步的状态转化成失败的状态
   }
 )

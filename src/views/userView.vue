@@ -163,7 +163,7 @@ import { Back } from '@element-plus/icons-vue'
 import { CameraFilled } from '@element-plus/icons-vue'
 import { CloseBold } from '@element-plus/icons-vue'
 import UploadSev from '@/components/uploadSev.vue'
-import { singleService, userLike, userUpdateService } from '@/api/user/user'
+import { singleService, userShareAndMy, userUpdateService } from '@/api/user/user'
 import { ElMessage } from 'element-plus'
 import { userPageStore } from '@/stores/userProfilesStore'
 import { myStore } from '@/stores/myStore'
@@ -173,30 +173,40 @@ import router from '@/router'
 import { storeToRefs } from 'pinia'
 import { throttle } from 'lodash'
 import { useUserLikedStore } from '@/stores/UserPageDown/UserLikedStore'
+import { useUserShareAndMyStore } from '@/stores/UserPageDown/ShareAndMyStore'
+const userShareAndMyStore=useUserShareAndMyStore()
 const userLikedStore=useUserLikedStore()
-const {likeHistories}=storeToRefs(userLikedStore)
+const {CombineHistories}=storeToRefs(userShareAndMyStore)
+const { likeHistories }=storeToRefs(userLikedStore)
 onMounted(async () => {
   window.addEventListener('scroll', onScroll)
 })
 const onScroll = throttle(async () => {
-  
   const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
   const viewportHeight = window.innerHeight
   const scrollHeight = document.documentElement.scrollHeight
-  if (scrollTop + viewportHeight >= scrollHeight) {
-    if (route.params.type === 'likes') {
-      const current = likeHistories[router.currentRoute.value.fullPath]?.current
-      const response = await userLike(route.params.emailCut,current)
-      userLikedStore.pushArray(response.data,router.currentRoute.value.fullPath)
-      likeHistories[router.currentRoute.value.fullPath].current += 1
-      saveCurrentPageState(router.currentRoute.value.fullPath)
+  if (scrollTop + viewportHeight >= scrollHeight-100) {
+    if(route.name==='likes'){
+      const current = likeHistories.value[route.path]?.current
+      userLikedStore.loadData(route.params.emailCut,current,route.path)
+      saveCurrentPageState(route.path)
+    }else if(route.name==='posts'){
+      const current = CombineHistories.value[route.path]?.current
+      userShareAndMyStore.loadData(route.params.emailCut,current,route.path)
+      saveShareState(route.path)
     }
   }
-}, 300)
+}, 1000)
+const saveShareState = (path) => {
+  userShareAndMyStore.savePageState(path, {
+    current:CombineHistories.value[route.path]?.current || 1,
+    combinedTweet:CombineHistories.value[route.path]?.combinedTweet
+  })
+}
 const saveCurrentPageState = (path) => {
   userLikedStore.savePageState(path, {
-    current:likeHistories[router.currentRoute.value.fullPath]?.current || 1,
-    likedTweet:likeHistories[router.currentRoute.value.fullPath]?.likedTweet
+    current:likeHistories.value[route.path]?.current || 1,
+    likedTweet:likeHistories.value[route.path]?.likedTweet
   })
 }
 const useUserStore = userPageStore()

@@ -6,13 +6,17 @@
           <el-menu-item index="1">为您推荐</el-menu-item>
           <el-menu-item index="2">正在关注</el-menu-item>
         </el-menu>
+        <TweetPublish></TweetPublish>
       </el-header>
       <el-main class="main">
+        
       </el-main>
     </el-container>
   </div>
 </template>
 <script setup lang="ts">
+import TweetPublish from '@/components/TweetPublish.vue';
+
 </script>
 
 <style lang="scss">

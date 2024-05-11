@@ -9,6 +9,7 @@ export const useUserLikedStore = defineStore(
     interface LikeState {
       likedTweet?: Tweet[]
       current: number
+      allDataLoaded?: boolean
     }
     interface Tweet {
       userId: string
@@ -25,11 +26,19 @@ export const useUserLikedStore = defineStore(
       if (!likeHistories.value[routePath]) {
         likeHistories.value[routePath] = {
           likedTweet: [],
-          current: 1
+          current: 1,
+          allDataLoaded: false
         }
       }
+      if(likeHistories.value[routePath].allDataLoaded){
+        return;
+      }
       const response = await userLike(emailCut, current)
-      likeHistories.value[routePath].likedTweet = response.data
+      if (response.data.length === 0) {
+        likeHistories.value[routePath].allDataLoaded = true; 
+        return;
+      }
+      likeHistories.value[routePath].likedTweet = [...likeHistories.value[routePath].likedTweet,...response.data]
       likeHistories.value[routePath].current += 1
     }
     const savePageState = (routePath, state: LikeState) => {
@@ -38,25 +47,21 @@ export const useUserLikedStore = defineStore(
         ...state
       }
     }
-    const pushArray = (newArr: Tweet[], path) => {
-      likeHistories.value[path].likedTweet.push(...newArr);  
+    const pushItem = (item: Tweet, path: string) => {
+      const alreadyLiked = likeHistories.value[path].likedTweet.some(
+        (tweet) => tweet.tweetId === item.tweetId
+      );
+      if (!alreadyLiked) {
+        likeHistories.value[path].likedTweet.unshift(item);
+      }
     };
-    const pushItem = (item: Tweet, path) => {
-      likeHistories.value[path].likedTweet.unshift(item);  
-    };
-    // const delItem = (item: Tweet, path) => {
-    //   const index = likeHistories.value[path].likedTweet.findIndex((tweet: Tweet) => tweet.tweetId === item.tweetId);
-    //   if (index !== -1) {
-    //     likeHistories.value[path].likedTweet.splice(index, 1);
-    //   }
-    // };
     const getPageState = (routePath) => {
       return likeHistories.value[routePath]
     }
     const clearHistory = () => {
       likeHistories.value = {}
     }
-    return { savePageState, getPageState, likeHistories, clearHistory, loadData,pushArray,pushItem}
+    return { savePageState, getPageState, likeHistories, clearHistory, loadData,pushItem}
   },
   {
     persist: {

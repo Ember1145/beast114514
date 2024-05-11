@@ -1,7 +1,7 @@
 <!--  -->
 <template>
     <div>
-    <TwiDown v-for="i in likeHistories[route.fullPath]?.likedTweet" :tweet="i" :key="i.tweetId"></TwiDown>
+    <TwiDown v-for="i in likeHistories[route.path]?.likedTweet" :tweet="i" :key="i.tweetId"></TwiDown>
     </div>
 </template>
 

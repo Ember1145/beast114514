@@ -1,9 +1,10 @@
 <template>
-  <div class="sum">
+  <div class="sum" @mouseenter="fatherColor = '#fdfafa'" @mouseleave="fatherColor = 'white'">
     <TweetMain :key="tweet.tweetId" :tweet="tweet" @click="getIn(tweet)">
       <template #foot>
         <TweetIcon
           :tweet="tweet"
+          :fatherColor="fatherColor"
           :key="'tweet-icon-' + tweet.tweetId"
         ></TweetIcon>
       </template>
@@ -16,41 +17,40 @@ import TweetIcon from './TweetIcon.vue'
 import TweetMain from './TweetMain.vue'
 import { TwiDetailStore } from '@/stores/TwiDetailStore'
 import router from '@/router'
-import {  twiDetail } from '@/api/twi/twi'
+import { twiDetail } from '@/api/twi/twi'
 import { PropType, ref } from 'vue'
 import { usePageHistoryStore } from '@/stores/pageHistoryStore'
 import { useScrollStore } from '@/stores/useScrollStore'
-const useScroll=useScrollStore()
+const useScroll = useScrollStore()
 const pageHistoryStore = usePageHistoryStore()
 const usetwiDetail = TwiDetailStore()
+const fatherColor = ref()
 defineProps({
   tweet: {
     type: Object as PropType<Tweet>,
     required: true
   }
 })
-
 const saveCurrentPageState = (path) => {
   pageHistoryStore.savePageState(path, {
-    current:pageHistoryStore.histories[router.currentRoute.value.fullPath]?.current||2,
+    current: pageHistoryStore.histories[router.currentRoute.value.fullPath]?.current || 2,
     top: usetwiDetail.top,
     center: usetwiDetail.center,
-    combineComments:usetwiDetail.combinedComments
+    combineComments: usetwiDetail.combinedComments
   })
   console.log('状态已保存', pageHistoryStore.histories)
 }
 
 const getIn = async (tweet: Tweet) => {
   const path = `/${tweet.emailCut}/status/${tweet.tweetId}`
-  useScroll.savePosition(router.currentRoute.value.fullPath,window.scrollY)
+  useScroll.savePosition(router.currentRoute.value.fullPath, window.scrollY)
   const response = await twiDetail(tweet, 1)
   console.log(response)
   usetwiDetail.top = response.data.topChain
   usetwiDetail.center = tweet
-  usetwiDetail.loadComments(response.data.focusChains,response.data.commentVOList)
+  usetwiDetail.loadComments(response.data.focusChains, response.data.commentVOList)
   saveCurrentPageState(path)
   router.push(path)
- 
 }
 interface Tweet {
   userId: string
@@ -67,7 +67,6 @@ interface Tweet {
 
 <style lang="scss" scoped>
 .sum {
-
   width: 100%;
   height: auto;
   &:hover {

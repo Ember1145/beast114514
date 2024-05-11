@@ -1,10 +1,9 @@
 import { RouteRecordRaw, createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/LoginView.vue'
-import { userPageStore } from '@/stores/userProfilesStore';
 import { useScrollStore } from '@/stores/useScrollStore';
-import { nextTick } from 'vue';
 import { useUserLikedStore } from '@/stores/UserPageDown/UserLikedStore'
-
+import { useUserShareAndMyStore } from '@/stores/UserPageDown/ShareAndMyStore';
+import { useUserReplyStore } from '@/stores/UserPageDown/UserReplyStore';
 const routes: RouteRecordRaw[] = [
   {
     path: '/login',
@@ -33,12 +32,32 @@ const routes: RouteRecordRaw[] = [
             path: '', // 默认子路径
             name: 'posts',
             component: () => import('@/components/PageDown/withPosts.vue'),
+            beforeEnter: async (to, from, next) => {
+              const userShareAndMyStore=useUserShareAndMyStore()
+              const emailCut = to.params.emailCut;
+              if(userShareAndMyStore.CombineHistories[to.path]?.combinedTweet.length>0){
+               next()
+              }else{
+                await userShareAndMyStore.loadData(emailCut,1,to.path )
+                next();
+              }         
+            },
             
           },
           {
             path: 'replies', // 回复子路径
             name: 'replies',
-            component: () => import('@/components/PageDown/withReplies.vue')
+            component: () => import('@/components/PageDown/withReplies.vue'),
+            beforeEnter: async (to, from, next) => {
+              const userRplyStore=useUserReplyStore()
+              const emailCut = to.params.emailCut;
+              if(userRplyStore.replyHistories[to.path]?.replyTweet.length>0){
+               next()
+              }else{
+                await userRplyStore.loadData(emailCut,1,to.path )
+                next();
+              }         
+            },
           },
           {
             path: 'media', // 媒体子路径
@@ -55,7 +74,7 @@ const routes: RouteRecordRaw[] = [
               if(userLikedStore.likeHistories[to.path]?.likedTweet.length>0){
                next()
               }else{
-                await userLikedStore.loadData(emailCut,userLikedStore.likeHistories[to.path]?.current||1,to.path);
+                await userLikedStore.loadData(emailCut,1,to.path);
                 next();
               }         
             },

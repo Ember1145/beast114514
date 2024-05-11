@@ -58,3 +58,17 @@ export const userLike = (emailCut,current) => {
     params:{current}
   })
 }
+export const userShareAndMy = (emailCut,current) => {
+  return request({
+    url: `/${emailCut}/shares`,
+    method: 'get',
+    params:{current}
+  })
+}
+export const userReply = (emailCut,current) => {
+  return request({
+    url: `/${emailCut}/reply`,
+    method: 'get',
+    params:{current}
+  })
+}

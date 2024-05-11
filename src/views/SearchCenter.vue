@@ -29,7 +29,6 @@
       <queryFoot :tweets="tweets" v-if="!route.query.f" />
       <queryLive v-else-if="route.query.f === 'live'" />
       <queryUser :items="items" v-else-if="route.query.f === 'user'" />
-      <!-- 其他条件 -->
     </div>
   </div>
 </template>
@@ -37,9 +36,9 @@
 <script setup lang="ts">
 import { Back, Search } from '@element-plus/icons-vue'
 import {  onMounted, ref, watchEffect } from 'vue'
-import queryFoot from './queryFoot.vue'
-import queryLive from './queryLive.vue'
-import queryUser from '@/views/queryUser.vue'
+import queryFoot from '@/components/QueryPart/queryFoot.vue'
+import queryLive from '@/components/QueryPart/queryLive.vue'
+import queryUser from '@/components/QueryPart/queryUser.vue'
 import { LocationQueryValue, useRoute } from 'vue-router'
 import { userSearch } from '@/api/Search/Search'
 import router from '@/router'
@@ -74,7 +73,6 @@ watchEffect(async() => {
    const response=await userSearch(params)
    items.value=response.data.users
    tweets.value=response.data.tweets
-  //  console.log(tweets.value)
 })
 
 const updateQuery = (newQuery: any) => {

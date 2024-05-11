@@ -6,19 +6,15 @@
         :key="tweet.tweetId"
         :tweet="tweet"
         @click="getIn(tweet)"
+        :hideLastChain="hideLastChain"
       >
-        <template #foot>
-          <TweetIcon
-            :tweetId="tweet.tweetId"
-          ></TweetIcon>
-        </template>
       </ChainPart>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import TweetIcon from '@/components/TweetIcon.vue'
+
 import { TwiDetailStore } from '@/stores/TwiDetailStore'
 import router from '@/router'
 import { twiDetail } from '@/api/twi/twi'
@@ -26,6 +22,7 @@ import { PropType, ref } from 'vue'
 import ChainPart from './chainPart.vue'
 import { usePageHistoryStore } from '@/stores/pageHistoryStore'
 import { useScrollStore } from '@/stores/useScrollStore'
+
 const useScroll=useScrollStore()
 const pageHistoryStore = usePageHistoryStore();
 const usetwiDetail = TwiDetailStore()
@@ -33,7 +30,8 @@ const usetwiDetail = TwiDetailStore()
   tweetChain: {
     type: Object as PropType<Tweet[][]>,
     required: true
-  }
+  },
+  hideLastChain:Boolean
 })
 const saveCurrentPageState = (path) => {
   pageHistoryStore.savePageState(path, {
@@ -70,9 +68,6 @@ interface Tweet {
 <style lang="scss" scoped>
 .sum {
   height: auto;
-  &:hover {
-    background-color: #fdfafa;
-    cursor: pointer;
-  }
+  
 }
 </style>

@@ -5,7 +5,7 @@
       <div class="ft">帖子</div>
     </div>
     <div class="main">
-      <ChainFull :tweetChain="top"></ChainFull>
+      <ChainFull :tweetChain="top" :hideLastChain="false"></ChainFull>
       <TweetAround :tweet="center"></TweetAround>
       <mediaBut :tweetId="center?.tweetId"></mediaBut>
       <div v-for="(section, index) in combinedComments" :key="index">
@@ -13,7 +13,7 @@
           <TwiDown v-for="tweet in section" :key="tweet.tweetId" :tweet="tweet"></TwiDown>
         </template>
         <template v-else>
-          <ChainFull :tweetChain="section"></ChainFull>      
+          <ChainFull :tweetChain="section" :hideLastChain="true"></ChainFull>      
         </template>
       </div>
       <div class="more">更多</div>

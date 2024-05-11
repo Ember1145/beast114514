@@ -28,7 +28,7 @@
         </template>
       </div>
     </div>
-      <CommentIcon :tweetId="tweet?.tweetId"></CommentIcon>
+      <CommentIcon :tweet="tweet"></CommentIcon>
   </div>
 </template>
 
@@ -99,6 +99,8 @@ const isImage = (mediaItem: string): boolean => {
     justify-content: flex-start;
     .el-avatar{
       cursor: pointer;
+      position: relative;
+      z-index: 101;
     }
     .name {
       margin-left: 10px;
