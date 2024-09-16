@@ -1,107 +1,105 @@
 <template>
-  <el-container
-    class="common"
-    @mouseenter="fatherColor = '#fdfafa'"
-    @mouseleave="fatherColor = 'white'"
-    :style="{ '--chain-display': hideLastChain ? 'none' : 'block' }"
-  >
-    <el-aside width="64px">
-      <el-avatar :size="46" :src="tweet?.avatarUrl" @click.stop="handlePage" />
-    </el-aside>
-    <el-container>
-      <el-header>
-        <ul class="up">
-          <li class="name" @click.stop="handlePage">{{ tweet?.username }}</li>
-          <li class="email" @click.stop="handlePage">@{{ tweet?.emailCut }}</li>
-          <li class="time">{{ formatDate(tweet?.createdAt!) }}</li>
-          <li><el-button circle :icon="MoreFilled" text></el-button></li>
-        </ul>
-
-        <div class="down">
-          {{ tweet?.content }}
-        </div></el-header
-      >
-      <el-main>
-        <div class="tweet-media" v-if="tweet?.media">
-          <template v-for="(mediaItem, i) in tweet.media" :key="i">
-            <el-image
-              v-if="isImage(mediaItem)"
-              :src="mediaItem"
-              :style="{ gridRow: computeRow(i), gridColumn: computeColumn() }"
-              :preview-src-list="tweet.media.filter(isImage)"
-            />
-            <video
-              v-else
-              :src="mediaItem"
-              controls
-              :style="{ gridRow: computeRow(i), gridColumn: computeColumn() }"
-            ></video>
-          </template>
-        </div>
-      </el-main>
-        <TweetIcon
-          :tweet="props.tweet"
-          :fatherColor="fatherColor"
-        ></TweetIcon>
+  <template v-for="(tweet, index) in topChain" :key="index">
+    <el-container
+      class="common"
+      @mouseenter="fatherColor = '#fdfafa'"
+      @mouseleave="fatherColor = 'white'"
+      :style="{ '--chain-display': hideLastChain ? 'none' : 'block' }"
+      @click="getIn(tweet.emailCut, tweet.tweetId)"
+    >
+      <el-aside width="64px">
+        <el-avatar :size="46" :src="tweet?.avatarUrl" @click.stop="handlePage(tweet.emailCut)" />
+      </el-aside>
+      <el-container>
+        <el-header>
+          <ul class="up">
+            <li class="name" @click.stop="handlePage(tweet.emailCut)">{{ tweet?.username }}</li>
+            <li class="email" @click.stop="handlePage(tweet.emailCut)">@{{ tweet?.emailCut }}</li>
+            <li class="time">{{ formatDate(tweet?.createdAt!) }}</li>
+            <li>
+              <el-dropdown trigger="click">
+                <el-button circle :icon="MoreFilled" text @click.stop></el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item
+                      v-if="tweet?.emailCut === my.emailCut"
+                      @click="delTweet(tweet)"
+                      >删除推文</el-dropdown-item
+                    >
+                    <el-dropdown-item>引用</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </li>
+          </ul>
+          <div class="down">
+            {{ tweet?.content }}
+          </div></el-header
+        >
+        <el-main>
+          <div class="tweet-media" v-if="tweet?.media" @click.stop>
+            <template v-for="(mediaItem, i) in tweet.media" :key="i">
+              <el-image
+                v-if="isImage(mediaItem)"
+                :src="mediaItem"
+                :style="{
+                  gridRow: computeRow(i, tweet.media),
+                  gridColumn: computeColumn(tweet.media),
+                  'min-height': computeVarHeight(tweet.media)
+                }"
+                :preview-src-list="tweet.media.filter(isImage)"
+              />
+              <video
+                v-else
+                :src="mediaItem"
+                controls
+                :style="{
+                  gridRow: computeRow(i, tweet.media),
+                  gridColumn: computeColumn(tweet.media)
+                }"
+              ></video>
+            </template>
+          </div>
+        </el-main>
+        <TweetIcon :tweet="tweet" :fatherColor="fatherColor"></TweetIcon>
+      </el-container>
     </el-container>
-  </el-container>
+    <div
+      class="more-reply"
+      v-if="index === 0 && isFold"
+      @click="getIn(tweet.emailCut, tweet.tweetId)"
+    >
+      <div class="font">更多回复</div>
+    </div>
+  </template>
 </template>
 <script setup lang="ts">
 import { PropType, defineProps, ref } from 'vue'
 import { MoreFilled } from '@element-plus/icons-vue'
-import { getUserPage } from '@/api/user/user'
-import TweetIcon from '@/components/TweetIcon.vue'
+import TweetIcon from '../IconButton/TweetIcon.vue'
 import router from '@/router'
+import { deleteTweet } from '@/api/twi/twi'
+import { myStore } from '@/stores/myStore'
+import { useUserReplyStore } from '@/stores/UserPageDown/UserReplyStore'
+import { formatDate } from '@/utils/FormatDate'
+import { computeColumn, computeRow, isImage } from '@/utils/mediaBuild'
+const computeVarHeight = (media) => {
+  return media.length < 3 ? '280px' : '150px'
+}
+
+const getIn = async (emailCut, tweetId) => {
+  const path = `/${emailCut}/status/${tweetId}`
+  router.push(path)
+}
+const userReplyStore = useUserReplyStore()
+const my = myStore()
+const delTweet = async (tweet) => {
+  await deleteTweet(tweet.tweetId)
+  userReplyStore.delItem(tweet.tweetId)
+}
 const fatherColor = ref()
-const handlePage = () => {
-  getUserPage(props.tweet.emailCut)
-  router.push(`/${props.tweet.emailCut}`)
-}
-
-const formatDate = (createdAt: string) => {
-  const now = Date.now()
-  const tweetDate = new Date(createdAt).getTime() // 假设 createdAt 是 ISO 8601 字符串
-  const diffInSeconds = Math.floor((now - tweetDate) / 1000)
-  const diffInMinutes = Math.floor(diffInSeconds / 60)
-  const diffInHours = Math.floor(diffInMinutes / 60)
-  if (diffInSeconds < 60) {
-    return `${diffInSeconds}秒前`
-  } else if (diffInMinutes < 60) {
-    return `${diffInMinutes}分钟前`
-  } else if (diffInHours < 24) {
-    return `${diffInHours}小时前`
-  } else {
-    return formatDateToPattern(createdAt)
-  }
-}
-const formatDateToPattern = (date: string) => {
-  const dateObj = new Date(date)
-  const yearStr = dateObj.getFullYear().toString()
-  const monthStr = (dateObj.getMonth() + 1).toString()
-  const dayStr = dateObj.getDate().toString()
-  const formattedDate = `${yearStr}年${parseInt(monthStr)}月${parseInt(dayStr)}日`
-  return formattedDate
-}
-const computeRow = (i: any) => {
-  if (!props.tweet.media || !Array.isArray(props.tweet.media)) return
-  if (props.tweet.media.length === 1) {
-    return 'span 2'
-  }
-  if (props.tweet.media.length === 2) {
-    return '1/3'
-  }
-  return props.tweet.media.length === 3 && i === 0 ? 'span 2' : 'span 1'
-}
-const computeColumn = () => {
-  if (!props.tweet.media || !Array.isArray(props.tweet.media)) return
-  if (props.tweet.media.length === 1) {
-    return 'span 2'
-  }
-}
-
-const isImage = (mediaItem: string): boolean => {
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-  return imageExtensions.some((ext) => mediaItem.endsWith(ext))
+const handlePage = (emailCut) => {
+  router.push(`/${emailCut}`)
 }
 
 interface Tweet {
@@ -114,13 +112,16 @@ interface Tweet {
   parentId: string
   media: Array<any>
   createdAt: string
+  realParent: string
 }
 const props = defineProps({
-  tweet: {
-    type: Object as PropType<Tweet>,
+  topChain: {
+    type: Object as PropType<Tweet[]>,
     required: true
   },
-  hideLastChain:Boolean
+
+  hideLastChain: Boolean,
+  isFold: Boolean
 })
 </script>
 
@@ -142,14 +143,35 @@ const props = defineProps({
     position: absolute;
     left: 36px;
     top: 64px;
-    height: 87%;
+    height: 99%;
     border-left: 3px solid #cfd9de;
     z-index: 100;
   }
   &:last-child::before {
-    display:var(--chain-display, block); 
+    display: var(--chain-display, block);
   }
-
+  .more-reply {
+    position: relative;
+    background-color: white;
+    height: 40px;
+    z-index: 101;
+    display: flex;
+    align-items: center;
+    .font {
+      color: rgb(64, 64, 204);
+      cursor: pointer;
+      position: relative;
+      margin-left: 50px;
+      &::before {
+        content: '';
+        position: absolute;
+        left: -13px;
+        height: 99%;
+        border-left: 3px dashed #cfd9de;
+        z-index: 100;
+      }
+    }
+  }
   .el-aside {
     width: 50px;
     .el-avatar {
@@ -179,7 +201,7 @@ const props = defineProps({
     li {
       line-height: 1;
       &:first-child {
-        font-weight: 800;
+        font-weight: 700;
         position: relative;
         cursor: pointer;
         &:hover::after {
@@ -211,7 +233,6 @@ const props = defineProps({
   .tweet-media {
     display: grid;
     max-width: 500px; /* 限制容器的最大宽度 */
-    min-height: 10px;
     max-height: 500px;
     // height: 300px;
     grid-template-rows: repeat(2, 1fr); /* 使网格有两行 */

@@ -19,6 +19,7 @@ export const userPageStore = defineStore(
       followingCount: number
       tweetsCount: number
       status: number
+      conversationId?:string
     }
   const useMy=myStore()
     const profiles = reactive<{ [emailCut: string]: UserProfile }>({})

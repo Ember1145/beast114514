@@ -1,8 +1,13 @@
 <template>
   <div class="sum">
     <input type="file" @change="selectFile" ref="fileInput" hidden />
-    <div class="top" ref="editableDiv" contenteditable="true" 
-    @input="handleInput" :data-placeholder="showPlaceholder ? '' : '请输入内容'"></div>
+    <div
+      class="top"
+      ref="editableDiv"
+      contenteditable="true"
+      @input="handleInput"
+      :data-placeholder="showPlaceholder ? '' : '请输入内容'"
+    ></div>
     <div class="gridp">
       <div class="grid" v-for="(file, index) in files.slice(0, 4)" :key="index">
         <div class="media" v-if="isImage(file)">
@@ -16,36 +21,87 @@
       </div>
     </div>
     <div class="foot">
-      <el-button
-        class="fa-solid fa-image"
-        @click="triggerFileInput"
-        circle
-        :disabled="files.length >= 4"
-      ></el-button>
-      <el-button class="fa-solid fa-face-smile" circle></el-button>
-      <el-button class="fa-solid fa-list" circle></el-button>
-      <el-button round color="black" @click="uploadFiles">回复</el-button>
+      <el-button @click="triggerFileInput" circle :disabled="files.length >= 4" text>
+        <i class="fa-solid fa-image" style="color: #1d9bf0"></i>
+      </el-button>
+      <el-button circle text @click="openEmojiPicker">
+        <i class="fa-solid fa-face-smile" style="color: #1d9bf0"></i>
+      </el-button>
+      <el-button circle text>
+        <i class="fa-solid fa-list" style="color: #1d9bf0"></i>
+      </el-button>
+      <el-button round color="black" @click="uploadFiles" size="large">Reply</el-button>
     </div>
+  </div>
+  <div class="emoji">
+    <EmojiPicker
+      :hide-search="true"
+      :disable-skin-tones="true"
+      :hide-group-names="true"
+      v-show="emojiVision"
+      @select="onSelectEmoji"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watchEffect, onUnmounted, computed } from 'vue'
+import { ref, watchEffect, onUnmounted, computed, onMounted } from 'vue'
 import { fileAddService, twiAddService } from '@/api/twi/twi'
 import { TwiDetailStore } from '@/stores/TwiDetailStore'
-import { ElMessage } from 'element-plus';
-const usetwiDetail = TwiDetailStore()
-const props = defineProps({
-  tweetId: String
+import { ElMessage } from 'element-plus'
+import EmojiPicker from 'vue3-emoji-picker'
+import 'mm/vue3-emoji-picker/dist/style.css'
+import { myStore } from '@/stores/myStore'
+import { useUserReplyStore } from '@/stores/UserPageDown/UserReplyStore'
+import { useRoute } from 'vue-router'
+const route=useRoute()
+const my = myStore()
+const userReplyStore = useUserReplyStore()
+const emojiVision = ref(false)
+const openEmojiPicker = () => {
+  emojiVision.value = !emojiVision.value
+  console.group(emojiVision.value)
+}
+const handleOutsideClick = (event) => {
+  const sumElement = document.querySelector('.sum .emoji .el-button')
+  if (sumElement && !sumElement.contains(event.target) && emojiVision.value) {
+    emojiVision.value = false
+  }
+}
+const onSelectEmoji = (emoji) => {
+  console.log(emoji)
+  Text.value += emoji.i
+  updateDivContent()
+}
+
+const updateDivContent = () => {
+  if (editableDiv.value) {
+    editableDiv.value.innerText = Text.value
+  }
+}
+onMounted(() => {
+  // 在文档上添加点击事件监听器
+  document.addEventListener('click', handleOutsideClick)
 })
+onUnmounted(() => {
+  // 在实例卸载时移除事件监听器
+  document.removeEventListener('click', handleOutsideClick)
+})
+const usetwiDetail = TwiDetailStore()
+
+const props = defineProps({
+  tweetId: String,
+  realParent:String
+})
+
 const showPlaceholder = computed(() => {
-  return Text.value||files.value.length>0
-});
+  return Text.value || files.value.length > 0
+})
 const editableDiv = ref<HTMLElement | null>(null)
 const Text = ref<string>('')
 const handleInput = (e: Event) => {
   const target = e.target as HTMLElement | null // 更改为了 HTMLDivElement
-  Text.value =  target.innerText
+  Text.value = target.innerText
 }
 interface FileWithPreview {
   name: string
@@ -61,7 +117,7 @@ const triggerFileInput = () => {
   fileInput.value?.click()
 }
 const uploadFiles = async () => {
-  if (files.value.length===0 && Text.value.trim() === '') {
+  if (files.value.length === 0 && Text.value.trim() === '') {
     ElMessage.warning('不能提交空内容')
     return
   }
@@ -81,16 +137,37 @@ const uploadFiles = async () => {
   const commentData = {
     parentId: props.tweetId,
     content: Text.value,
-    media: media.value
+    media: media.value,
+    realParent:props.realParent
   }
-
-  const newComment = await twiAddService(commentData)
-  usetwiDetail.pushItem(newComment.data)
+  const response= await twiAddService(commentData)
+  const local={
+    parentId: props.tweetId,
+    content: Text.value,
+    media: media.value,
+    realParent:props.realParent,
+    avatarUrl:my.avatarUrl,
+    emailCut:my.emailCut,
+    username:my.username,
+    userId:my.userId,
+    tweetId:response.data.tweetId,
+    createdAt:response.data.createdAt
+  }
+  usetwiDetail.histories[route.path].combinedComments.push([local])
   files.value = []
   Text.value = ''
   if (editableDiv.value) {
-      editableDiv.value.innerText = ''; // 这将清空内容可编辑的 div
-    }
+    editableDiv.value.innerText = '' // 这将清空内容可编辑的 div
+  }
+  const path = `/${my.emailCut}/replies`
+  let tweetArray = [];
+
+// 如果 usetwiDetail.top 存在且为非空数组，则合并全部元素
+if (Array.isArray(usetwiDetail.histories[route.path].top) &&usetwiDetail.histories[route.path].top.length > 0) {
+  tweetArray.push(usetwiDetail.histories[route.path].top[0][0]);
+}
+tweetArray.push(usetwiDetail.histories[route.path].center, local);
+  userReplyStore.pushItem(tweetArray, path)
   ElMessage.success('评论成功')
 }
 
@@ -152,17 +229,17 @@ watchEffect(() => {
     position: relative;
     white-space: pre-wrap;
     &::after {
-    content: attr(data-placeholder); /* 使用属性值作为内容 */
-    color: #aaa; /* placeholder 文本的颜色 */
-    position: absolute; /* 使伪元素绝对定位来定位文本 */
-    pointer-events: none; /* 确保点击占位符文本时不会干扰到 div 输入 */
-    left: 20px; /* 根据需要调整定位 */
-    top: 0; /* 根据需要调整定位 */
-    bottom: 0;
-    margin: auto;
-    width: fit-content;
-    height: fit-content;
-}
+      content: attr(data-placeholder); /* 使用属性值作为内容 */
+      color: #aaa; /* placeholder 文本的颜色 */
+      position: absolute; /* 使伪元素绝对定位来定位文本 */
+      pointer-events: none; /* 确保点击占位符文本时不会干扰到 div 输入 */
+      left: 20px; /* 根据需要调整定位 */
+      top: 0; /* 根据需要调整定位 */
+      bottom: 0;
+      margin: auto;
+      width: fit-content;
+      height: fit-content;
+    }
   }
   .gridp {
     width: 100%;
@@ -208,5 +285,10 @@ watchEffect(() => {
     }
     margin-left: 20px;
   }
+}
+.emoji {
+  position: absolute;
+  transform: translate(-30%, -8%);
+  z-index: 1000;
 }
 </style>

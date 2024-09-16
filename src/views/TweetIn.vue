@@ -5,10 +5,10 @@
       <div class="ft">帖子</div>
     </div>
     <div class="main">
-      <ChainFull :tweetChain="top" :hideLastChain="false"></ChainFull>
-      <TweetAround :tweet="center"></TweetAround>
-      <mediaBut :tweetId="center?.tweetId"></mediaBut>
-      <div v-for="(section, index) in combinedComments" :key="index">
+      <ChainFull :tweetChain="histories[route.path].top" :hideLastChain="false"></ChainFull>
+      <TweetAround :tweet="histories[route.path].center"></TweetAround>
+      <mediaBut :tweetId="histories[route.path].center.tweetId" :realParent="histories[route.path].top[0][0]?.tweetId||histories[route.path].center.tweetId"></mediaBut>
+      <div v-for="(section, index) in histories[route.path].combinedComments" :key="index">
         <template v-if="isCommon(section)">
           <TwiDown v-for="tweet in section" :key="tweet.tweetId" :tweet="tweet"></TwiDown>
         </template>
@@ -16,67 +16,48 @@
           <ChainFull :tweetChain="section" :hideLastChain="true"></ChainFull>      
         </template>
       </div>
-      <div class="more">更多</div>
+      <div class="more"><el-button>More</el-button></div>
     </div>
   </div>
 
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { TwiDetailStore } from '@/stores/TwiDetailStore'
 import TwiDown from '@/components/TwiDown.vue'
-import mediaBut from '@/components/mediaBut.vue'
-import TweetAround from '@/components/TweetAround.vue'
+import mediaBut from '@/components/TweetUploader/mediaBut.vue'
+import TweetAround from '@/components/IconButton/TweetAround.vue'
 import { Back } from '@element-plus/icons-vue'
 import router from '@/router'
-import { usePageHistoryStore } from '@/stores/pageHistoryStore'
-import { onBeforeRouteUpdate } from 'vue-router'
+import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 import ChainFull from '@/components/Chain/chainFull.vue'
 import { storeToRefs } from 'pinia'
-import { twiDetail } from '@/api/twi/twi'
 import { throttle} from 'lodash'
-onMounted(() => {
+const route=useRoute()
+onMounted(async() => {
   window.addEventListener('scroll', onScroll);
 });
-const pageHistoryStore = usePageHistoryStore()
 const usetwiDetail = TwiDetailStore()
-const { top, center, combinedComments } = storeToRefs(usetwiDetail)
+const { histories } = storeToRefs(usetwiDetail)
 const isCommon = (section) => {
   return Array.isArray(section) && !(Array.isArray(section[0]));
 };
 const onScroll = throttle(async () => {
-  const current=pageHistoryStore.histories[router.currentRoute.value.fullPath]?.current||2
   const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
   const viewportHeight = window.innerHeight;
   const scrollHeight = document.documentElement.scrollHeight;
   if (scrollTop + viewportHeight >= scrollHeight - 100) { // 给予一点容错值
-    const response = await twiDetail(center.value, current);
-    usetwiDetail.addComments(response.data.focusChains, response.data.commentVOList);
-    pageHistoryStore.histories[router.currentRoute.value.fullPath].current += 1;
-    saveCurrentPageState(router.currentRoute.value.fullPath);
-    console.log()
+    usetwiDetail.loadData(route.params.emailCut,route.params.tweetId,route.path)
   }
-}, 300);
-const saveCurrentPageState = (path) => {
-  pageHistoryStore.savePageState(path, {
-    current: pageHistoryStore.histories[router.currentRoute.value.fullPath].current,
-    top: usetwiDetail.top,
-    center: usetwiDetail.center,
-    combineComments: usetwiDetail.combinedComments
-  })
-  console.log('状态已保存', pageHistoryStore.histories)
-}
+}, 500);
+
 onUnmounted(() => {
   window.removeEventListener('scroll', onScroll)
 })
-onBeforeRouteUpdate(async (to, from) => {
-  const savedState = pageHistoryStore.getPageState(to.path)
-  if (savedState && Object.keys(savedState).length > 0) {
-    usetwiDetail.top = savedState.top
-    usetwiDetail.center = savedState.center
-    usetwiDetail.combinedComments = savedState.combineComments
-    console.log('状态已恢复', pageHistoryStore.histories, 'dang', savedState)
+onBeforeRouteUpdate(async (to) => {
+  if (!usetwiDetail.histories[to.path]) {
+    await usetwiDetail.loadData(to.params.emailCut,to.params.tweetId,to.path);
   }
 })
 const handleClose = () => {
@@ -102,6 +83,12 @@ const handleClose = () => {
       margin-left: 20px;
       font-size: 20px;
     }
+  }
+  .more{
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 </style>

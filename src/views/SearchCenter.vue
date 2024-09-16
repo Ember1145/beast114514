@@ -65,6 +65,9 @@ onMounted(() => {
 watchEffect(async() => {
   qu.value = route.query.qu
   f.value = route.query.f
+  if(!qu.value){
+    return
+  }
   const params:RouteQuery = { qu: qu.value }
   if (f.value !== undefined) {
     params.f = f.value

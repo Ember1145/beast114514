@@ -1,6 +1,6 @@
 <template>
   <div class="sum" @mouseenter="fatherColor = '#fdfafa'" @mouseleave="fatherColor = 'white'">
-    <TweetMain :key="tweet.tweetId" :tweet="tweet" @click="getIn(tweet)">
+    <TweetMain :key="tweet.tweetId" :tweet="tweet"  @click="getIn(tweet.emailCut,tweet.tweetId)">
       <template #foot>
         <TweetIcon
           :tweet="tweet"
@@ -13,45 +13,10 @@
 </template>
 
 <script setup lang="ts">
-import TweetIcon from './TweetIcon.vue'
-import TweetMain from './TweetMain.vue'
-import { TwiDetailStore } from '@/stores/TwiDetailStore'
-import router from '@/router'
-import { twiDetail } from '@/api/twi/twi'
+import router from '@/router';
+import TweetIcon from './IconButton/TweetIcon.vue'
+import TweetMain from './IconButton/TweetMain.vue'
 import { PropType, ref } from 'vue'
-import { usePageHistoryStore } from '@/stores/pageHistoryStore'
-import { useScrollStore } from '@/stores/useScrollStore'
-const useScroll = useScrollStore()
-const pageHistoryStore = usePageHistoryStore()
-const usetwiDetail = TwiDetailStore()
-const fatherColor = ref()
-defineProps({
-  tweet: {
-    type: Object as PropType<Tweet>,
-    required: true
-  }
-})
-const saveCurrentPageState = (path) => {
-  pageHistoryStore.savePageState(path, {
-    current: pageHistoryStore.histories[router.currentRoute.value.fullPath]?.current || 2,
-    top: usetwiDetail.top,
-    center: usetwiDetail.center,
-    combineComments: usetwiDetail.combinedComments
-  })
-  console.log('状态已保存', pageHistoryStore.histories)
-}
-
-const getIn = async (tweet: Tweet) => {
-  const path = `/${tweet.emailCut}/status/${tweet.tweetId}`
-  useScroll.savePosition(router.currentRoute.value.fullPath, window.scrollY)
-  const response = await twiDetail(tweet, 1)
-  console.log(response)
-  usetwiDetail.top = response.data.topChain
-  usetwiDetail.center = tweet
-  usetwiDetail.loadComments(response.data.focusChains, response.data.commentVOList)
-  saveCurrentPageState(path)
-  router.push(path)
-}
 interface Tweet {
   userId: string
   username: string
@@ -62,6 +27,17 @@ interface Tweet {
   parentId: string
   media: Array<any>
   createdAt: string
+}
+const fatherColor = ref()
+defineProps({
+  tweet: {
+    type: Object as PropType<Tweet>,
+    required: true
+  }
+})
+const getIn = async (emailCut,tweetId) => {
+  const path = `/${emailCut}/status/${tweetId}`
+  router.push(path)
 }
 </script>
 

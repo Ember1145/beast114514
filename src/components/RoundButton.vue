@@ -2,14 +2,17 @@
   <button
     class="round-btn"
     :style="{
-      'background-color': buttonHover
+      'background-color': buttonHover,
+      'width':size+'px',
+      'height':size+'px'
     }">  <slot></slot>
   </button>
 </template>
 
 <script setup lang="ts">
 defineProps({
-buttonHover:String
+buttonHover:String,
+size:Number
 })
 
 </script>
@@ -25,7 +28,7 @@ buttonHover:String
   align-items: center;
   justify-content: center;
   position: relative; // 为 absolute 定位的 icon 做准备
-  transition: background-color 0.2s; // 平滑背
+  transition: background-color 0.3s; // 平滑背
 }
 
 

@@ -1,8 +1,7 @@
-<!--  -->
 <template>
-  <div class="tweet-interactions">
+  <div class="tweet-inter">
     <div class="interaction" @mouseenter="handleComment" @mouseleave="commentOut">
-      <RoundButton :buttonHover="commentHover || props.fatherColor">
+      <RoundButton :buttonHover="commentHover">
         <i
           class="fa-regular fa-comment"
           :style="{
@@ -21,7 +20,7 @@
     </div>
     <el-dropdown trigger="click">
       <div class="interaction" @mouseenter="handleShare" @mouseleave="shareOut" @click.stop>
-        <RoundButton :buttonHover="shareHover || props.fatherColor">
+        <RoundButton :buttonHover="shareHover">
           <i
             class="fa-solid fa-repeat"
             :style="{
@@ -31,7 +30,7 @@
         ></RoundButton>
         <div
           class="share-count"
-          :class="{ 'bubble-animation': shareActive }"
+          :class="{ 'bubble-animation': shareActive ,'bubble-animation-reverse': !shareActive}"
           :style="{
             color: shareActive ? 'green' : shareHover ? 'green' : 'initial'
           }"
@@ -52,7 +51,7 @@
       @mouseleave="likeOut"
       @click.stop="toggleLike"
     >
-      <RoundButton :buttonHover="likeHover || props.fatherColor">
+      <RoundButton :buttonHover="likeHover">
         <i
           :class="[likeActive ? 'fa-solid fa-heart liked' : 'fa-regular fa-heart']"
           :style="{
@@ -71,53 +70,72 @@
       </div>
     </div>
     <div class="interaction">
-      <el-button class="fa-solid fa-users" circle text></el-button>
+      <el-button class="fa-regular fa-bookmark" circle text></el-button> 
     </div>
-    <div class="right">
-      <el-button class="fa-regular fa-bookmark" circle text></el-button>
+    <div class="interaction">
       <el-button class="fa-solid fa-link" circle text></el-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useInteractionStore } from '@/stores/Interaction/InteractionStore'
-import { InteractionState } from '@/stores/Interaction/InteractionState'
-import { PropType, computed, onMounted, ref } from 'vue'
-import { queryStatus } from '@/api/twi/twi'
-interface Tweet {
-  userId: string
-  username: string
-  emailCut: string
-  content: string
-  avatarUrl: string
-  tweetId: string
-  parentId: string
-  media: Array<any>
-  createdAt: string
+
+import { InteractionState } from '@/stores/Interaction/InteractionState';
+import { useInteractionStore } from '@/stores/Interaction/InteractionStore';
+import { PropType, computed,   ref } from 'vue'
+const buttonHover=ref()
+const handleLike=()=>{
+  likeHover.value = true
+  buttonHover.value='rgba(255,0,0,0.1)'
 }
+const likeOut=()=>{
+  likeHover.value=false
+  buttonHover.value='white'
+}
+const commentHover = ref()
+const handleComment = () => {
+  commentHover.value = 'rgba(0,0,255,0.1)'
+}
+const commentOut = () => {
+  commentHover.value = ''
+}
+const shareHover = ref()
+const handleShare = () => {
+  shareHover.value = 'rgba(0,255,0,0.1)'
+}
+const shareOut = () => {
+  shareHover.value = ''
+}
+const shareActive = computed(() => {
+  return interactionStore.interactions[props.tweet?.tweetId]?.shareState === InteractionState.Active
+})
+const toggleShare = () => {
+  interactionStore.toggleShare(props.tweet)
+}
+
+interface Tweet {
+      userId: string
+      username: string
+      emailCut: string
+      content: string
+      avatarUrl: string
+      tweetId: string
+      parentId: string
+      media: Array<any>
+      createdAt: string
+    }
 const props = defineProps({
   tweet: {
     type: Object as PropType<Tweet>,
     required: true
-  },
-  fatherColor: String
-})
-const interactionStore = useInteractionStore()
-onMounted(async () => {
-  const response = await queryStatus(props.tweet.tweetId)
-  interactionStore.initInteraction(
-    props.tweet.tweetId,
-    response.data?.likeCount || 0,
-    response.data?.commentCount || 0,
-    response.data?.shareCount || 0,
-    response.data?.liked || InteractionState.Inactive,
-    response.data?.shared || InteractionState.Inactive
-  )
-})
+  }
+});
+const interactionStore = useInteractionStore();
+
+// 创建计算属性来确定按钮样式
 const likeActive = computed(() => {
-  return interactionStore.interactions[props.tweet?.tweetId]?.likeState === InteractionState.Active
-})
+  return interactionStore.interactions[props.tweet.tweetId]?.likeState === InteractionState.Active;
+});
 const isFading=ref()
 const toggleLike = () => {
   interactionStore.toggleLike(props.tweet)
@@ -126,33 +144,7 @@ const toggleLike = () => {
        isFading.value = false; // 动画完成后，恢复正常
     }, 300);
 }
-const toggleShare = () => {
-  interactionStore.toggleShare(props.tweet.tweetId)
-}
-const shareActive = computed(() => {
-  return interactionStore.interactions[props.tweet?.tweetId]?.shareState === InteractionState.Active
-})
-const commentHover = ref()
-const shareHover = ref()
-const handleShare = () => {
-  shareHover.value = 'rgba(0,255,0,0.1)'
-}
-const shareOut = () => {
-  shareHover.value = ''
-}
-const handleComment = () => {
-  commentHover.value = 'rgba(0,0,255,0.1)'
-}
-const commentOut = () => {
-  commentHover.value = ''
-}
-const handleLike = () => {
-  likeHover.value = 'rgba(255,0,0,0.1)'
-}
-const likeOut = () => {
-  likeHover.value = ''
-}
-const likeHover = ref()
+const likeHover = ref(false)
 </script>
 
 <style lang="scss" scoped>
@@ -186,23 +178,38 @@ const likeHover = ref()
     opacity: 1;
   }
 }
+@keyframes slide-and-fade-reverse {
+  0% {
+    transform: translateY(-100%); 
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);  /* 向下滑动并逐渐消失 */
+    opacity: 1;
+  }
+}
 .bubble-animation {
   animation: slide-and-fade 0.5s ease forwards; /* 加上 forwards 让动画完成时停在结束位置 */
 }
-.tweet-interactions {
+.bubble-animation-reverse {
+  animation: slide-and-fade-reverse 0.5s ease forwards; /* 加上 forwards 让动画完成时停在结束位置 */
+}
+.tweet-inter {
+  border-top: 1px solid var(--el-border-color);
+  border-bottom: 1px solid var(--el-border-color);
+  height: 5vh;
+  padding-top: 10px;
+  padding-bottom: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 30px;
   color: #536471;
+
   .interaction {
     display: flex;
     align-items: center;
-  }
-  .right {
-    display: flex;
-    justify-content: end;
-    margin: 0;
-    color: rgb(100, 170, 224)
+    cursor: pointer;
   }
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="sum" @click="handleOutsideClick">
+  <div class="all" @click="handleOutsideClick">
     <input type="file" @change="selectFile" ref="fileInput" hidden />
     <div
       class="top"
@@ -20,6 +20,17 @@
         </div>
       </div>
     </div>
+    <div class="tag">
+      <el-check-tag :checked="checked1" type="primary" @change="onChange1">
+      Music
+    </el-check-tag>
+    <el-check-tag :checked="checked2" type="success" @change="onChange2">
+      Picture
+    </el-check-tag>
+    <el-check-tag :checked="checked" type="success" @change="onChange">
+      Life
+    </el-check-tag>
+  </div>
     <div class="foot">
       <el-button @click="triggerFileInput" circle :disabled="files.length >= 4" text>
         <i class="fa-solid fa-image" style="color: #1d9bf0"></i>
@@ -44,8 +55,65 @@ import { TwiDetailStore } from '@/stores/TwiDetailStore'
 import { ElMessage } from 'element-plus'
 import EmojiPicker from 'vue3-emoji-picker'
 import 'mm/vue3-emoji-picker/dist/style.css'
+import { useUserShareAndMyStore } from '@/stores/UserPageDown/ShareAndMyStore'
+import { myStore } from '@/stores/myStore'
+const checked = ref(false)
+const checked1 = ref(false)
+const checked2 = ref(false)
+const tag=ref([])
+const onChange = (status: boolean) => {
+  checked.value = status;
+  const tagIndex = tag.value.indexOf("life");
+  if (status === true) {
+    // 如果状态为true且标签数组中没有"Life"，则添加它
+    if (tagIndex === -1) {
+      tag.value.push("life");
+    }
+  } else {
+    // 如果状态为false且标签数组中存在"Life"，则移除它
+    if (tagIndex !== -1) {
+      tag.value.splice(tagIndex, 1);
+    }
+  }
+};
+
+const onChange1 = (status: boolean) => {
+  checked1.value = status;
+  const tagIndex = tag.value.indexOf("music");
+  
+  if (status === true) {
+    // 如果状态为true且标签数组中没有"Life"，则添加它
+    if (tagIndex === -1) {
+      tag.value.push("music");
+    }
+  } else {
+    // 如果状态为false且标签数组中存在"Life"，则移除它
+    if (tagIndex !== -1) {
+      tag.value.splice(tagIndex, 1);
+    }
+  }
+};
+
+const onChange2 = (status: boolean) => {
+  checked2.value = status;
+  const tagIndex = tag.value.indexOf("picture");
+  
+  if (status === true) {
+    // 如果状态为true且标签数组中没有"Life"，则添加它
+    if (tagIndex === -1) {
+      tag.value.push("picture");
+    }
+  } else {
+    // 如果状态为false且标签数组中存在"Life"，则移除它
+    if (tagIndex !== -1) {
+      tag.value.splice(tagIndex, 1);
+    }
+  }
+};
+const my = myStore()
+const ShareAndMyStore = useUserShareAndMyStore()
+const usetwiDetail = TwiDetailStore()
 const emojiVision = ref(false)
-// Method to open EmojiPicker
 const openEmojiPicker = () => {
   emojiVision.value = !emojiVision.value;
   console.group(emojiVision.value)
@@ -64,21 +132,23 @@ onUnmounted(() => {
   // 在实例卸载时移除事件监听器
   document.removeEventListener('click', handleOutsideClick);
 });
-const usetwiDetail = TwiDetailStore()
-const showPlaceholder = computed(() => {
-  return Text.value || files.value.length > 0
-})
 
 const onSelectEmoji = (emoji) => {
   console.log(emoji)
   Text.value += emoji.i;
   updateDivContent(); 
 };
+
 const updateDivContent = () => {
   if (editableDiv.value) {
     editableDiv.value.innerText = Text.value;
   }
 }
+
+const showPlaceholder = computed(() => {
+  return Text.value || files.value.length > 0
+})
+
 const editableDiv = ref<HTMLElement | null>(null)
 const Text = ref<string>('')
 const handleInput = (e: Event) => {
@@ -119,17 +189,35 @@ const uploadFiles = async () => {
   const commentData = {
     parentId: null,
     content: Text.value,
-    media: media.value
+    media: media.value,
+    realParent:null,
+    tag:tag.value
   }
 
-  const newComment = await twiAddService(commentData)
-  usetwiDetail.pushItem(newComment.data)
+  const response = await twiAddService(commentData)
+  const local={
+    parentId: null,
+    content: Text.value,
+    media: media.value,
+    realParent:null,
+    tag:tag.value,
+    avatarUrl:my.avatarUrl,
+    emailCut:my.emailCut,
+    username:my.username,
+    userId:my.userId,
+    tweetId:response.data.tweetId,
+    createdAt:response.data.createdAt
+  }
+  // usetwiDetail.pushItem(local)
   files.value = []
   Text.value = ''
   if (editableDiv.value) {
     editableDiv.value.innerText = '' // 这将清空内容可编辑的 div
   }
-  ElMessage.success('评论成功')
+    const path=`/${my.emailCut}`
+    ShareAndMyStore.pushItem(local,path)
+  
+  ElMessage.success('发布成功')
 }
 
 const selectFile = (event: Event) => {
@@ -177,12 +265,12 @@ watchEffect(() => {
 })
 </script>
 <style scoped lang="scss">
-.sum {
+.all {
   width: 100%;
   height: auto;
   border: 1px solid var(--el-border-color);
   border-top: none;
-  margin-top: 1px;
+  background-color: white;
   .top {
     min-height: 4px; /* 给予足够的高度以便能够点击并编辑 */
     padding: 15px; /* 添加一些内边距 */
@@ -248,8 +336,7 @@ watchEffect(() => {
   }
 }
 .emoji {
-    position: relative;
-    transform: translate(-30%, -8%);
+    position: fixed;
     z-index: 100;
   }
 </style>

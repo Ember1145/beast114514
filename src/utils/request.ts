@@ -37,10 +37,12 @@ instance.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       alert('请先登录')
+      const my =myStore()
+      my.token=''
       router.push('/login')
     } else {
       // 显示服务异常信息
-      ElMessage.success('服务yic')
+      ElMessage.success('服务异常')
     }
     return Promise.reject(error) // 异步的状态转化成失败的状态
   }

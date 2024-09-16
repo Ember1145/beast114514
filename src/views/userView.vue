@@ -16,7 +16,10 @@
         </div>
         <div class="but" v-if="useMy.userId !== profiles[route.params.emailCut]?.userId">
           <el-button circle size="large" :icon="MoreFilled"></el-button>
-          <el-button circle size="large"><i class="fa-solid fa-envelope"></i></el-button>
+          <!-- 私信按钮 -->
+          <el-button circle size="large" @click="handleEnv"
+            ><i class="fa-solid fa-envelope"></i
+          ></el-button>
           <el-button
             v-if="profiles[route.params.emailCut]?.status === 1"
             round
@@ -162,51 +165,81 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { Back } from '@element-plus/icons-vue'
 import { CameraFilled } from '@element-plus/icons-vue'
 import { CloseBold } from '@element-plus/icons-vue'
-import UploadSev from '@/components/uploadSev.vue'
-import { singleService, userShareAndMy, userUpdateService } from '@/api/user/user'
+import UploadSev from '@/components/TweetUploader/uploadSev.vue'
+import { singleService,  userUpdateService } from '@/api/user/user'
 import { ElMessage } from 'element-plus'
 import { userPageStore } from '@/stores/userProfilesStore'
 import { myStore } from '@/stores/myStore'
-import { useRoute } from 'vue-router'
+import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 import { MoreFilled } from '@element-plus/icons-vue'
 import router from '@/router'
 import { storeToRefs } from 'pinia'
 import { throttle } from 'lodash'
 import { useUserLikedStore } from '@/stores/UserPageDown/UserLikedStore'
 import { useUserShareAndMyStore } from '@/stores/UserPageDown/ShareAndMyStore'
-const userShareAndMyStore=useUserShareAndMyStore()
-const userLikedStore=useUserLikedStore()
-const {CombineHistories}=storeToRefs(userShareAndMyStore)
-const { likeHistories }=storeToRefs(userLikedStore)
+import { useSendListStore } from '@/stores/Conversation/sendListStore'
+import { getConversation } from '@/api/Dialog/postMsg'
+const userShareAndMyStore = useUserShareAndMyStore()
+const userLikedStore = useUserLikedStore()
+const sendListStore = useSendListStore()
+const my = myStore()
+const { CombineHistories } = storeToRefs(userShareAndMyStore)
+const { likeHistories } = storeToRefs(userLikedStore)
 onMounted(async () => {
   window.addEventListener('scroll', onScroll)
 })
+const handleEnv = async() => {
+  const profile = profiles.value[route.params.emailCut]
+  const { avatarUrl, emailCut, username, userId,conversationId } = profile
+  if(conversationId){
+    sendListStore.sendList[conversationId]={
+    conversationId,
+    avatarUrl,
+    emailCut,
+    username,
+    userId
+  }
+  router.push(`/messages/${conversationId}`)
+  return
+  }
+  const response = await getConversation(my.userId, profile.userId)
+  profiles.value[route.params.emailCut].conversationId=response.data
+  sendListStore.sendList[response.data]={
+    avatarUrl,
+    emailCut,
+    username,
+    userId,
+    conversationId:response.data
+  }
+  router.push(`/messages/${response.data}`)
+  
+}
 const onScroll = throttle(async () => {
   const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
   const viewportHeight = window.innerHeight
   const scrollHeight = document.documentElement.scrollHeight
-  if (scrollTop + viewportHeight >= scrollHeight-100) {
-    if(route.name==='likes'){
+  if (scrollTop + viewportHeight >= scrollHeight - 100) {
+    if (route.name === 'likes') {
       const current = likeHistories.value[route.path]?.current
-      userLikedStore.loadData(route.params.emailCut,current,route.path)
+      userLikedStore.loadData(route.params.emailCut, current, route.path)
       saveCurrentPageState(route.path)
-    }else if(route.name==='posts'){
+    } else if (route.name === 'posts') {
       const current = CombineHistories.value[route.path]?.current
-      userShareAndMyStore.loadData(route.params.emailCut,current,route.path)
+      userShareAndMyStore.loadData(route.params.emailCut, current, route.path)
       saveShareState(route.path)
     }
   }
 }, 1000)
 const saveShareState = (path) => {
   userShareAndMyStore.savePageState(path, {
-    current:CombineHistories.value[route.path]?.current || 1,
-    combinedTweet:CombineHistories.value[route.path]?.combinedTweet
+    current: CombineHistories.value[route.path]?.current || 1,
+    combinedTweet: CombineHistories.value[route.path]?.combinedTweet
   })
 }
 const saveCurrentPageState = (path) => {
   userLikedStore.savePageState(path, {
-    current:likeHistories.value[route.path]?.current || 1,
-    likedTweet:likeHistories.value[route.path]?.likedTweet
+    current: likeHistories.value[route.path]?.current || 1,
+    likedTweet: likeHistories.value[route.path]?.likedTweet
   })
 }
 const useUserStore = userPageStore()
@@ -231,6 +264,17 @@ watch(
   },
   { immediate: true }
 )
+onBeforeRouteUpdate(async (to, from) => {
+  if (from.params.emailCut !== to.params.emailCut) {
+    const userShareAndMyStore = useUserShareAndMyStore()
+    const emailCut = to.params.emailCut
+    if (userShareAndMyStore.CombineHistories[to.path]?.combinedTweet.length > 0) {
+      console.log('什么都不做')
+    } else {
+      await userShareAndMyStore.loadData(emailCut, 1, to.path)
+    }
+  }
+})
 const avatar = ref()
 const avatarUrl = ref()
 const bgUrl = ref()
@@ -307,14 +351,19 @@ const saveAll = () => {
       })
     uploadPromises.push(uploadAvatarPromise)
   }
-
   Promise.all(uploadPromises).then(async () => {
+    // 假设你这里已经有了 oldAvatarUrl 和 oldBackUrl 变量，它们存储了旧的 URL
     const userInfo = {
       avatarUrl: avatarUrl.value,
       backUrl: backUrl.value,
       username: username.value,
       position: position.value,
-      introduction: introduction.value
+      introduction: introduction.value,
+      // 只有在 URL 真的改变时才添加旧的 URL
+      ...(avatarUrl.value
+        ? { oldAvatarUrl: profiles.value[route.params.emailCut]?.avatarUrl }
+        : {}),
+      ...(backUrl.value ? { oldBackUrl: profiles.value[route.params.emailCut]?.backUrl } : {})
     }
     Object.keys(userInfo).forEach((key) => {
       if (userInfo[key] === undefined) {
@@ -325,17 +374,14 @@ const saveAll = () => {
       ElMessage.error('不能提交空的表单')
       return
     }
-    await userUpdateService({
-      avatarUrl: avatarUrl.value,
-      backUrl: backUrl.value,
-      username: username.value,
-      position: position.value,
-      introduction: introduction.value
-    })
+    await userUpdateService(userInfo)
+    // Pinia state update 可能需要剔除 oldAvatarUrl 和 oldBackUrl
+    const { oldAvatarUrl, oldBackUrl, ...userProfileUpdate } = userInfo
     useUserStore.profiles[route.params.emailCut] = {
       ...useUserStore.profiles[route.params.emailCut],
-      ...userInfo
+      ...userProfileUpdate
     }
+
     ElMessage.success('修改成功!')
     userVisible.value = false
   })

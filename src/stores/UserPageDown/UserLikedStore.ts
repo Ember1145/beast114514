@@ -21,6 +21,7 @@ export const useUserLikedStore = defineStore(
       parentId: string
       media: Array<any>
       createdAt: string
+      realParent:string
     }
     const loadData = async (emailCut, current,routePath) => {
       if (!likeHistories.value[routePath]) {
@@ -48,11 +49,11 @@ export const useUserLikedStore = defineStore(
       }
     }
     const pushItem = (item: Tweet, path: string) => {
-      const alreadyLiked = likeHistories.value[path].likedTweet.some(
+      const alreadyLiked = likeHistories.value[path]?.likedTweet.some(
         (tweet) => tweet.tweetId === item.tweetId
       );
       if (!alreadyLiked) {
-        likeHistories.value[path].likedTweet.unshift(item);
+        likeHistories.value[path]?.likedTweet.unshift(item);
       }
     };
     const getPageState = (routePath) => {

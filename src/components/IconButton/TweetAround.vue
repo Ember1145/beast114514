@@ -7,35 +7,62 @@
         <div class="user">{{ tweet.username }}</div>
         <div class="emailCut">@{{ tweet.emailCut }}</div>
       </div>
-      <el-button circle></el-button>
+      <div class="right">
+        <el-dropdown trigger="click">
+        <el-button circle :icon="MoreFilled" text @click.stop></el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item v-if="tweet.emailCut === my.emailCut" @click="delTweet(tweet)"
+              >删除推文</el-dropdown-item
+            >
+            <el-dropdown-item>引用</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+      </div>
+      
     </div>
-    <div class="down">   
-        {{ tweet?.content }}
+    <div class="down">
+      {{ tweet?.content }}
     </div>
     <div class="main">
       <div class="tweet-media" v-if="tweet?.media">
         <template v-for="(mediaItem, i) in tweet.media" :key="i">
-          <el-image v-if="isImage(mediaItem)"
+          <el-image
+            v-if="isImage(mediaItem)"
             :src="mediaItem"
-            :style="{ gridRow: computeRow(i), gridColumn: computeColumn() }"
+            :style="{
+              gridRow: computeRow(i,tweet.media),
+              gridColumn: computeColumn(tweet.media),
+              'min-height': varHeight
+            }"
             :preview-src-list="tweet.media.filter(isImage)"
           />
-          <video v-else
+          <video
+            v-else
             :src="mediaItem"
             controls
-            :style="{ gridRow: computeRow(i), gridColumn: computeColumn() }"
+            :style="{ gridRow: computeRow(i,tweet.media), gridColumn: computeColumn(tweet.media) }"
           ></video>
         </template>
       </div>
+      {{ formatDate(tweet.createdAt )}}
     </div>
-      <CommentIcon :tweet="tweet"></CommentIcon>
+    <CommentIcon :tweet="tweet"></CommentIcon>
   </div>
 </template>
 
 <script setup lang="ts">
-import { PropType } from 'vue'
-import CommentIcon from '@/components/CommentIcon.vue'
-import router from '@/router';
+import { PropType, computed } from 'vue'
+import { MoreFilled } from '@element-plus/icons-vue'
+import CommentIcon from './CommentIcon.vue'
+import router from '@/router'
+import { myStore } from '@/stores/myStore'
+import { deleteTweet } from '@/api/twi/twi'
+import { useUserReplyStore } from '@/stores/UserPageDown/UserReplyStore'
+import { formatDate } from '@/utils/FormatDate'
+import {computeColumn,computeRow,isImage} from '@/utils/mediaBuild'
+const userReplyStore = useUserReplyStore()
 interface Tweet {
   userId: string
   username: string
@@ -47,8 +74,19 @@ interface Tweet {
   media: Array<any>
   createdAt: string
 }
-const handlePage =async () => {
+const varHeight = computed(() => {
+  if (props.tweet.media.length < 3) {
+    return '280px'
+  }
+  return '150px'
+})
+const handlePage = async () => {
   router.push(`/${props.tweet.emailCut}`)
+}
+const my = myStore()
+const delTweet = async (tweet) => {
+  await deleteTweet(tweet.tweetId)
+  userReplyStore.delItem(tweet.tweetId)
 }
 const props = defineProps({
   tweet: {
@@ -56,27 +94,6 @@ const props = defineProps({
     required: true
   }
 })
-const computeRow = (i: any) => {
-  if (!props.tweet.media || !Array.isArray(props.tweet.media)) return
-  if (props.tweet.media.length === 1) {
-    return 'span 2'
-  }
-  if (props.tweet.media.length === 2) {
-    return '1/3'
-  }
-  return props.tweet.media.length === 3 && i === 0 ? 'span 2' : 'span 1'
-}
-
-const computeColumn = () => {
-  if (!props.tweet.media || !Array.isArray(props.tweet.media)) return
-  if (props.tweet.media.length === 1) {
-    return 'span 2'
-  }
-}
-const isImage = (mediaItem: string): boolean => {
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
-  return imageExtensions.some(ext => mediaItem.endsWith(ext));
-}
 </script>
 
 <style lang="scss" scoped>
@@ -84,10 +101,10 @@ const isImage = (mediaItem: string): boolean => {
   padding: 15px;
   border: 1px solid var(--el-border-color);
   border-top: none;
-  border-bottom:none ;
+  border-bottom: none;
   margin-bottom: 1px;
   padding-bottom: 0;
-  .down{
+  .down {
     font-size: 20px;
     margin-top: 20px;
     margin-bottom: 20px;
@@ -97,10 +114,13 @@ const isImage = (mediaItem: string): boolean => {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    .el-avatar{
+    .el-avatar {
       cursor: pointer;
       position: relative;
       z-index: 101;
+    }
+    .right {
+      margin-left: auto;
     }
     .name {
       margin-left: 10px;
@@ -125,7 +145,6 @@ const isImage = (mediaItem: string): boolean => {
     .tweet-media {
       display: grid;
       max-width: 800px; /* 限制容器的最大宽度 */
-      min-height: 10px;
       max-height: 500px;
       grid-template-rows: repeat(2, 1fr); /* 使网格有两行 */
       grid-template-columns: repeat(2, 1fr);

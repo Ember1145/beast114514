@@ -4,7 +4,9 @@ import { ref } from 'vue'
 import { handleLike, handleShare } from '@/api/twi/twi'
 import { useUserLikedStore } from '../UserPageDown/UserLikedStore'
 import { myStore } from '../myStore'
+import { useUserShareAndMyStore } from '../UserPageDown/ShareAndMyStore'
 const userLikedStore=useUserLikedStore()
+const userShare=useUserShareAndMyStore()
 const my=myStore()
 interface InteractionStatus {
   tweetId: string
@@ -69,13 +71,15 @@ export const useInteractionStore = defineStore(
       }
       const data = {
         tweetId: tweet.tweetId,
-        liked: liked
+        liked: liked,
+        userId:tweet.userId
       }
       await handleLike(data)
     }
 
-    const toggleShare = async(tweetId: string) => {
-      const interaction = interactions.value[tweetId]
+    const toggleShare = async(tweet: Tweet) => {
+      const path=`/${my.emailCut}`
+      const interaction = interactions.value[tweet.tweetId]
       const shared =
         interaction.shareState === InteractionState.Active
           ? InteractionState.Inactive
@@ -83,6 +87,7 @@ export const useInteractionStore = defineStore(
           interaction.shareState = shared
           if (shared === InteractionState.Active) {
             interaction.shareCount++ 
+            userShare.pushItem(tweet,path)
           } else {
             interaction.shareCount-- 
           }
@@ -90,7 +95,7 @@ export const useInteractionStore = defineStore(
             interaction.shareCount = 0
           }
           const data = {
-            tweetId: tweetId,
+            tweetId: tweet.tweetId,
             shared:shared
           }
           await handleShare(data)

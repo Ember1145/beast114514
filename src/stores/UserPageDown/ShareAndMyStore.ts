@@ -21,6 +21,7 @@ export const useUserShareAndMyStore = defineStore(
       parentId: string
       media: Array<any>
       createdAt: string
+      realParent:string
     }
     const loadData = async (emailCut, current,routePath) => {
       if (!CombineHistories.value[routePath]) {
@@ -49,7 +50,18 @@ export const useUserShareAndMyStore = defineStore(
       }
     }
     const pushItem = (item: Tweet, path) => {
-      CombineHistories.value[path].combinedTweet.unshift(item);  
+      const already = CombineHistories.value[path].combinedTweet.some(
+        (tweet) => tweet.tweetId === item.tweetId
+      );
+      if (!already) {
+        CombineHistories.value[path].combinedTweet.unshift(item);
+      }
+    };
+    const delItem = (tweetId: string, path) => {
+      const index = CombineHistories.value[path].combinedTweet.findIndex((item) => item.tweetId === tweetId);
+      if(index !== -1) {
+        CombineHistories.value[path].combinedTweet.splice(index, 1);
+      }
     };
     const getPageState = (routePath) => {
       return CombineHistories.value[routePath]
@@ -57,7 +69,7 @@ export const useUserShareAndMyStore = defineStore(
     const clearHistory = () => {
       CombineHistories.value = {}
     }
-    return { savePageState, getPageState, CombineHistories, clearHistory, loadData,pushItem}
+    return { savePageState, getPageState, CombineHistories, clearHistory, loadData,pushItem,delItem}
   },
   {
     persist: {

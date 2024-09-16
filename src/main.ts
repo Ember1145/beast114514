@@ -7,7 +7,6 @@ import PiniaPersist from 'pinia-plugin-persist'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import '@fortawesome/fontawesome-free/css/all.css'
-
 import '@/assets/base.css'
 const app = createApp(App)
 const pinia = createPinia()
@@ -18,3 +17,5 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 app.use(pinia)
 app.use(router)
 app.mount('#app')
+
+
