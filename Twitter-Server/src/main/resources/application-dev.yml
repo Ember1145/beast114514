@@ -9,7 +9,7 @@ twitter:
   alioss:
       endpoint: oss-cn-shenzhen.aliyuncs.com
       accessKeyId: LTAI5tNuYrWMjJWzTiq5V7zL
-      accessKeySecret: Rttw8dRybd0darpeXf1pMImxCtdNNG
+      accessKeySecret: 
       bucket-name: web-yeshou
   redis:
     host: 192.168.140.102
