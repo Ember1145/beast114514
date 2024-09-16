@@ -17,9 +17,12 @@ import java.io.Serializable;
 public class tokenVO implements Serializable {
     @ApiModelProperty("token")
     private String token;
-    @ApiModelProperty("email")
-    private  String email;
-    @ApiModelProperty("id")
-    private  long id;
-
+    @ApiModelProperty("emailCut")
+    private String emailCut;
+    @ApiModelProperty("userid")
+    private Long userId;
+    @ApiModelProperty("avatarUrl")
+    private String avatarUrl;
+    @ApiModelProperty("username")
+    private String username;
 }

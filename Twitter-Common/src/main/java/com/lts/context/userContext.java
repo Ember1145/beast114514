@@ -1,17 +1,17 @@
 package com.lts.context;
 
 public class userContext {
-    private static ThreadLocal<Long> userId = new ThreadLocal<>();
+    private static ThreadLocal<Long> userThread = new ThreadLocal<>();
 
     public static void setUserId(Long id) {
-        userId.set(id);
+        userThread.set(id);
     }
 
     public static Long getUserId() {
-        return userId.get();
+        return userThread.get();
     }
 
     public static void clear() {
-        userId.remove();
+        userThread.remove();
     }
 }

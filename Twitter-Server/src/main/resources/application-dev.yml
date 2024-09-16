@@ -11,9 +11,14 @@ twitter:
       accessKeyId: LTAI5tNuYrWMjJWzTiq5V7zL
       accessKeySecret: Rttw8dRybd0darpeXf1pMImxCtdNNG
       bucket-name: web-yeshou
-
   redis:
-    host: localhost
+    host: 192.168.140.102
     port: 6379
-    password:
+    password: 1145
     database: 10
+  rabbitmq:
+    host: 192.168.140.102
+    port: 5672
+    username: lts114
+    password: 114514
+    virtual-host: /

@@ -2,57 +2,54 @@ package com.lts.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.lts.Properties.JwtProperties;
 import com.lts.constant.JwtClaimsConstant;
 import com.lts.constant.MessageConstant;
 import com.lts.domain.dto.userDTO;
+import com.lts.domain.po.UserStatistics;
 import com.lts.domain.po.Users;
 import com.lts.domain.vo.tokenVO;
-import com.lts.domain.vo.userVO;
+import com.lts.domain.vo.userPageVO;
 import com.lts.exception.UserExistsException;
 import com.lts.exception.UserLostException;
+import com.lts.mapper.UserStatisticsMapper;
 import com.lts.mapper.UsersMapper;
-import com.lts.result.Result;
 import com.lts.service.IUsersService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.lts.utils.JwtSecretKeyUtil;
 import com.lts.utils.JwtUtil;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
-import lombok.Builder;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-
-/**
- * <p>
- *  服务实现类
- * </p>
- *
- * @author author
- * @since 2024-03-29
- */
+import java.util.stream.Collectors;
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements IUsersService {
-    @Autowired
-    public UsersMapper usersMapper;
+
+    private final UsersMapper usersMapper;
+    private final UserStatisticsMapper userStatisticsMapper;
     @Autowired
     private JwtProperties jwtProperties;
 
     @Override
-    public userVO userRegister(userDTO userDTO) {
+    public void userRegister(userDTO userDTO) {
 
         // 首先检查用户是否已经存在
-        Users existingUser = usersMapper.selectOne(new QueryWrapper<Users>().eq("email", userDTO.getEmail()));
+        LambdaQueryWrapper<Users> queryWrapper = new LambdaQueryWrapper<>();
+        LambdaQueryWrapper<Users> eq = queryWrapper.eq(Users::getEmail, userDTO.getEmail()).eq(Users::getEmailCut, userDTO.getEmailCut());
+        Users existingUser = usersMapper.selectOne(queryWrapper);
         if (existingUser != null) {
             throw new UserExistsException(MessageConstant.ALREADY_EXISTS);
         } else {
@@ -60,13 +57,12 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             Users newUser = BeanUtil.copyProperties(userDTO, Users.class);
             newUser.setCreatedAt(LocalDateTime.now());
             usersMapper.insert(newUser);
-            userVO userVO = BeanUtil.copyProperties(newUser, com.lts.domain.vo.userVO.class);
-//                log.info("DTO: {}", userDTO);
-//                log.info("New User: {}", newUser);
-            return userVO;
+            UserStatistics userStatistics = new UserStatistics();
+            userStatistics.setUserId(newUser.getUserId());
+            userStatisticsMapper.insert(userStatistics);
         }
-    }
 
+    }
     @Override
     public tokenVO login(userDTO userDTO) {
         QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
@@ -78,23 +74,47 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             throw new UserLostException("用户名或密码错误");
         } else {
             Map<String, Object> claims = new HashMap<>();
-            claims.put(JwtClaimsConstant.EMAIL, users.getUserId());
+            claims.put(JwtClaimsConstant.USERID, users.getUserId());
 
-//            SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
+            SecretKey secretKey = null;
+            try {
+                secretKey = JwtSecretKeyUtil.generateSecretKey(jwtProperties.getAdminSecretKey(), "salt".getBytes(), 65536, 256);
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            } catch (InvalidKeySpecException e) {
+                throw new RuntimeException(e);
+            }
             String token = JwtUtil.createJWT(
-                   jwtProperties.getAdminSecretKey(),
+                 secretKey,
                     jwtProperties.getAdminTtl(),
                     claims);
 
-            tokenVO tokenVo = tokenVO.builder().id(users.getUserId())
+            tokenVO tokenVo = tokenVO.builder()
                     .token(token)
-                    .email(users.getEmail())
+                    .emailCut(users.getEmailCut())
+                    .userId(users.getUserId())
+                    .avatarUrl(users.getAvatarUrl())
+                    .username(users.getUsername())
                     .build();
             return tokenVo;
         }
 
 
     }
+    public List<Users> findUserByEmailOrUsername(String qu) {
+                LambdaQueryWrapper<Users> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.like(Users::getEmailCut, qu)
+                .or()
+                .like(Users::getUsername, qu);
+        return usersMapper.selectList(queryWrapper).stream().distinct().collect(Collectors.toList());
+    }
 
+    @Override
+    public userPageVO queryUser(String emailCut, Long userId) {
+        LambdaQueryWrapper<Users> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Users::getEmailCut,emailCut);
+        Users users = usersMapper.selectOne(queryWrapper);
+        return usersMapper.queryUser(emailCut,userId,users.getUserId());
+    }
 }

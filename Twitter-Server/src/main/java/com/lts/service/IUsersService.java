@@ -4,14 +4,18 @@ import com.lts.domain.dto.userDTO;
 import com.lts.domain.po.Users;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.lts.domain.vo.tokenVO;
-import com.lts.domain.vo.userVO;
-import com.lts.result.Result;
-import org.springframework.stereotype.Service;
+import com.lts.domain.vo.userPageVO;
+
+import java.util.List;
 
 
 public interface IUsersService extends IService<Users> {
 
-    userVO userRegister(userDTO userDTO);
+void userRegister(userDTO userDTO);
 
     tokenVO login(userDTO userDTO);
+
+    List<Users> findUserByEmailOrUsername(String qu);
+
+    userPageVO queryUser(String emailCut, Long userId);
 }

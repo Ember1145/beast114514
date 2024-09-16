@@ -1,5 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.lts.mapper.UsersMapper">
-
+    <resultMap id="UserPageVOResultMap" type="com.lts.domain.vo.userPageVO">
+        <id column="user_id" property="userId" />
+        <result column="email_cut" property="emailCut" />
+        <result column="avatar_url" property="avatarUrl" />
+        <result column="introduction" property="introduction" />
+        <result column="position" property="position" />
+        <result column="created_at" property="createdAt" />
+        <result column="username" property="username" />
+        <result column="followers_count" property="followersCount" />
+        <result column="following_count" property="followingCount" />
+        <result column="tweets_count" property="tweetsCount" />
+        <result column="status" property="status" />
+    </resultMap>
+    <select id="queryUser" resultMap="UserPageVOResultMap">
+        SELECT u.*, us.followers_count, us.following_count, us.tweets_count
+        <choose>
+            <!-- 如果查看自己的主页，避免关联 follows 表 -->
+            <when test="userId == followerId">
+                FROM users u
+                LEFT JOIN user_statistics us ON u.user_id = us.user_id
+            </when>
+            <!-- 如果是查看别人的主页，关联 follows 表 -->
+            <otherwise>
+                , f.status
+                FROM users u
+                LEFT JOIN user_statistics us ON u.user_id = us.user_id
+                LEFT JOIN follows f ON f.followee_id = u.user_id AND f.follower_id = #{followerId}
+            </otherwise>
+        </choose>
+        WHERE u.email_cut = #{emailCut}
+    </select>
 </mapper>

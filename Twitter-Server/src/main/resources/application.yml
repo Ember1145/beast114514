@@ -1,6 +1,5 @@
 server:
   port: 8080
-
 spring:
   profiles:
     active: dev
@@ -12,18 +11,34 @@ spring:
       url: jdbc:mysql://${twitter.datasource.host}:${twitter.datasource.port}/${twitter.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
       username: ${twitter.datasource.username}
       password: ${twitter.datasource.password}
-  data:
-    redis:
+
+  redis:
       host: ${twitter.redis.host}
       password: ${twitter.redis.password}
       port: ${twitter.redis.port}
       database: ${twitter.redis.database}
-
+      lettuce:
+          pool:
+             max-active: 8
+             max-idle: 8
+             min-idle: 1
+             time-between-eviction-runs: 10s
+  rabbitmq:
+    host: ${twitter.rabbitmq.host}
+    port: ${twitter.rabbitmq.port}
+    username: ${twitter.rabbitmq.username}
+    password: ${twitter.rabbitmq.password}
+    virtual-host: ${twitter.rabbitmq.virtual-host}
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
 mybatis-plus:
   type-aliases-package: com.lts.domain.po
   configuration:
     map-underscore-to-camel-case: true
     cache-enabled: false
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
   global-config:
     db-config:
       id-type: auto
@@ -41,14 +56,14 @@ lts:
       # 设置jwt签名加密时使用的秘钥
       admin-secret-key: itcast114tsts822
       # 设置jwt过期时间
-      admin-ttl: 7200000
+      admin-ttl: 720000000
       # 设置前端传递过来的令牌名称
       admin-token-name: token
       user-secret-key: itheima
-      user-ttl: 7200000
+      user-ttl: 72000000
       user-token-name: authentication
     alioss:
       endpoint: ${twitter.alioss.endpoint}
-      accessKeyId: ${twitterr.alioss.accessKeyId}
+      accessKeyId: ${twitter.alioss.accessKeyId}
       accessKeySecret: ${twitter.alioss.accessKeySecret}
       bucket-name: ${twitter.alioss.bucket-name}

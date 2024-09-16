@@ -24,31 +24,35 @@ import lombok.experimental.Accessors;
 @Builder
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("users")
+@TableName(value = "users",autoResultMap = true)
 public class Users implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "user_id", type = IdType.AUTO)
-    private Integer userId;
+    private Long userId;
 
-    @TableField("username")
+
     private String username;
 
-    @TableField("email")
+
     private String email;
 
-    @TableField("password")
+
     private String password;
 
-    @TableField("avatarUrl")
+
     private String avatarUrl;
 
-    @TableField("introduction")
+
     private String introduction;
 
-    @TableField("created_at")
+
     private LocalDateTime createdAt;
 
+    private String backUrl;
+
+    private String position;
+    private String emailCut;
 
 }

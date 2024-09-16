@@ -6,7 +6,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.7.3</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/> <!-- lookup parent fro m repository -->
     </parent>
     <modules>
         <module>Twitter-Server</module>
@@ -22,10 +22,10 @@
         <java.version>17</java.version>
         <lombok>1.18.20</lombok>
         <mybatisplus>3.5.4.1</mybatisplus>
-        <fastjson>1.2.76</fastjson>
+        <fastjson>2.0.47</fastjson>
         <commons.lang>2.6</commons.lang>
         <druid>1.2.1</druid>
-        <aliyun.sdk.oss>3.10.2</aliyun.sdk.oss>
+        <aliyun.sdk.oss>3.15.1</aliyun.sdk.oss>
         <knife4j>3.0.2</knife4j>
         <aspectj>1.9.4</aspectj>
         <jaxb-api>2.3.1</jaxb-api>
@@ -69,14 +69,7 @@
             <artifactId>knife4j-spring-boot-starter</artifactId>
             <version>${knife4j}</version>
         </dependency>
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-starter</artifactId>
-            <version>${druid}</version>
-        </dependency>
-
     </dependencies>
 </dependencyManagement>
-
 
 </project>

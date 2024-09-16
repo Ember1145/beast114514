@@ -1,43 +1,42 @@
 package com.lts.domain.po;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.*;
+
 import java.time.LocalDateTime;
 import java.io.Serializable;
+import java.util.List;
+import com.baomidou.mybatisplus.extension.handlers.FastjsonTypeHandler;
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 import lombok.experimental.Accessors;
-
-/**
- * <p>
- * 
- * </p>
- *
- * @author author
- * @since 2024-04-07
- */
 @Data
 @EqualsAndHashCode(callSuper = false)
+@Builder
 @Accessors(chain = true)
-@TableName("tweets")
-@ApiModel(value="Tweets对象", description="")
+@TableName(value = "tweets",autoResultMap = true)
+@ApiModel(value="Tweets对象", description="推文")
+@AllArgsConstructor
+@NoArgsConstructor
 public class Tweets implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "tweet_id", type = IdType.AUTO)
-    private Integer tweetId;
+    private Long tweetId;
 
-    private Integer userId;
+    private Long userId;
 
     private String content;
 
     private LocalDateTime createdAt;
 
-    private String image;
+    @TableField(typeHandler = FastjsonTypeHandler.class )
+    private List<String> media;
 
+    @TableField("parent_id")
+    private Long parentId;
+    private Long realParent;
 
 }
+
+

@@ -1,5 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.lts.mapper.TweetsMapper">
-
+    <!-- 实现带分页的查询 -->
+    <resultMap id="TweetVOResultMap" type="com.lts.domain.vo.TweetVO">
+        <id property="tweetId" column="tweet_id" javaType="Long"/>
+        <result property="userId" column="user_id" javaType="Long"/>
+        <result property="content" column="content" javaType="String"/>
+        <result property="createdAt" column="created_at" javaType="java.time.LocalDateTime"/>
+        <result property="media" column="media" javaType="java.util.List" typeHandler="com.baomidou.mybatisplus.extension.handlers.FastjsonTypeHandler"/>
+        <result property="parentId" column="parent_id" javaType="Long"/>
+    </resultMap>
+    <select id="selectCommentsByTweetId" resultMap="TweetVOResultMap">
+        SELECT child.*, u.avatar_url, u.username, u.email_cut
+        FROM tweets AS child
+        JOIN tweets AS parent ON child.parent_id = parent.tweet_id
+        JOIN users AS u ON child.user_id = u.user_id
+        WHERE child.parent_id = #{tweetId}
+    </select>
+    <select id="hasFocusReply" resultType="boolean">
+        SELECT EXISTS (
+                   SELECT 1
+                   FROM tweets AS child
+                            INNER JOIN tweets AS parent ON child.parent_id = parent.tweet_id
+                   WHERE parent.tweet_id = #{tweetId}
+                     AND child.user_id = #{userId})  -- Check userId in both parent and
+    </select>
+    <select id="getTopChain" resultMap="TweetVOResultMap">
+        WITH RECURSIVE reply_chain AS (
+            -- Anchor member: Defines the base result set of the recursion.
+            SELECT t.*, u.avatar_url, u.username, u.email_cut
+            FROM tweets t
+                     LEFT JOIN users u ON t.user_id = u.user_id
+            WHERE t.tweet_id = #{tweetId}
+            UNION ALL
+            -- Recursive member: Defines the recursive rule that references reply_chain itself.
+            SELECT t.*, u.avatar_url, u.username, u.email_cut
+            FROM tweets t
+                     INNER JOIN reply_chain rc ON t.tweet_id = rc.parent_id
+                     LEFT JOIN users u ON t.user_id = u.user_id
+        )
+        SELECT * FROM reply_chain order by created_at asc ;
+    </select>
+    <select id="getDeliverTweet" resultMap="TweetVOResultMap">
+        SELECT t.*, u.avatar_url, u.username, u.email_cut
+        FROM tweets t
+        LEFT JOIN users u ON t.user_id = u.user_id
+       ${ew.customSqlSegment}
+        ORDER BY created_at DESC
+    </select>
 </mapper>
